@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using LmsModernApp.Data;
 using Lms.Data;
-using Lms.Data.Models;
+using Lms.Data.Models.Delib;
 using Lms.Data.Models.Decat;
 using Lms.Data.Models.Delocal;
 using Lms.Data.Models.Deweb;
