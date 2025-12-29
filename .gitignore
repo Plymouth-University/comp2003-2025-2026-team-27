@@ -1,0 +1,32 @@
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+*.pdb
+*.ilk
+*.aps
+*.tlog
+*.log
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Visual Studio files
+.vs/
+*.csproj.user
+
+# Other
+*.DS_Store
+
+# Ignore the legacy ans247lib directory
+ans247lib/

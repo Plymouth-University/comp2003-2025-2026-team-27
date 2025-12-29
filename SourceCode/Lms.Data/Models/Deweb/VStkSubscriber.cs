@@ -1,0 +1,15 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Lms.Data.Models.Deweb;
+
+public partial class VStkSubscriber
+{
+    public int BorNo { get; set; }
+
+    public int UniqueItemNo { get; set; }
+
+    public DateTime CreateDatetime { get; set; }
+
+    public string? UpdatedBy { get; set; }
+}

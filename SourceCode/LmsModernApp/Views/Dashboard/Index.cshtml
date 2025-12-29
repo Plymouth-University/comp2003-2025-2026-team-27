@@ -1,0 +1,32 @@
+@model LmsModernApp.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to your Dashboard</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Books</h5>
+                <p class="card-text display-3">@Model.TotalBookCount</p>
+                <a href="#" class="btn btn-primary">View all books</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Members</h5>
+                <p class="card-text display-3">@Model.TotalMemberCount</p>
+                <a href="#" class="btn btn-primary">View all members</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Add more dashboard elements here *@
