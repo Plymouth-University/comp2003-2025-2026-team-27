@@ -1,0 +1,54 @@
+﻿@page
+@model LmsModernApp.Areas.Identity.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login</h2>
+
+<form method="post">
+    <table style="width:100%; height:100%; background:white; border-left:0px;">
+        <tr style="width:100%">
+            <td colspan="2" align="center" style="width:100%; text-align:center"></td>
+        </tr>
+
+        <tr style="width:100%">
+            <td align="right" style="width:40%; height:26px;">
+                <label style="font-weight:bold; font-size:medium;">Username:</label>
+            </td>
+            <td align="left" style="width:60%; height:26px;">
+                <input asp-for="Input.UserName" style="width:195px; font-size:medium;" />
+                <span asp-validation-for="Input.UserName" style="color:red;"></span>
+            </td>
+        </tr>
+
+        <tr style="width:100%">
+            <td align="right" style="width:40%; height:26px;">
+                <label style="font-weight:bold; font-size:medium;">Password:</label>
+            </td>
+            <td align="left" style="width:60%; height:26px;">
+                <input asp-for="Input.Password" type="password" style="width:195px; font-size:medium;" />
+                <span asp-validation-for="Input.Password" style="color:red;"></span>
+            </td>
+        </tr>
+
+        <tr style="width:100%;" align="center">
+            <td align="right" style="width:40%; height:26px;"></td>
+            <td colspan="2" align="left" style="width:60%;">
+                <button type="submit" style="width:125px; margin-inline-start:33px;">
+                    Login
+                </button>
+            </td>
+        </tr>
+
+        <tr style="width:100%">
+            <td colspan="2" style="text-align:center; font-family:Arial; font-size:small;">
+                Please <a asp-page="/Account/RecoverAccount">click here</a> if you have forgotten your password
+            </td>
+        </tr>
+    </table>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
