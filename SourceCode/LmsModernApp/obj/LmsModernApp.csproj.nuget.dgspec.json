@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\LmsModernApp.csproj": {}
+    "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\LmsModernApp.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj": {
+    "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj",
+        "projectUniqueName": "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj",
         "projectName": "Lms.Data",
-        "projectPath": "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj",
-        "packagesPath": "C:\\Users\\Liam\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\obj\\",
+        "projectPath": "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj",
+        "packagesPath": "C:\\Users\\alind\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Liam\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\alind\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -77,24 +77,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\LmsModernApp.csproj": {
+    "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\LmsModernApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\LmsModernApp.csproj",
+        "projectUniqueName": "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\LmsModernApp.csproj",
         "projectName": "LmsModernApp",
-        "projectPath": "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\LmsModernApp.csproj",
-        "packagesPath": "C:\\Users\\Liam\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\obj\\",
+        "projectPath": "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\LmsModernApp.csproj",
+        "packagesPath": "C:\\Users\\alind\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\LmsModernApp\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Liam\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\alind\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -109,8 +109,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj": {
-                "projectPath": "C:\\Users\\Liam\\source\\repos\\Plymouth-University\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj"
+              "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj": {
+                "projectPath": "C:\\Users\\alind\\Source\\Repos\\comp2003-2025-2026-team-27\\SourceCode\\Lms.Data\\Lms.Data.csproj"
               }
             }
           }
@@ -171,7 +171,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

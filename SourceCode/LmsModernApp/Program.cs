@@ -15,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
+
 var delibConnectionString = builder.Configuration.GetConnectionString("DelibConnection") ?? throw new InvalidOperationException("Connection string 'DelibConnection' not found.");
 builder.Services.AddDbContext<DelibContext>(options =>
     options.UseSqlServer(delibConnectionString));
@@ -38,12 +39,19 @@ builder.Services.AddDbContext<DestatsContext>(options =>
 var reportConnectionString = builder.Configuration.GetConnectionString("ReportConnection") ?? throw new InvalidOperationException("Connection string 'ReportConnection' not found.");
 builder.Services.AddDbContext<DereportContext>(options =>
     options.UseSqlServer(reportConnectionString));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+
+
 builder.Services.AddControllersWithViews();
+
+
+//Repository
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+
 
 var app = builder.Build();
 
@@ -58,6 +66,7 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 
 app.UseHttpsRedirection();
 app.UseRouting();

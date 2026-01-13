@@ -6,25 +6,43 @@ using System.Threading.Tasks;
 
 namespace LmsModernApp.Controllers
 {
-    [Authorize]
     public class DashboardController : Controller
     {
-        private readonly IDashboardRepository _dashboardRepository;
+        private readonly IDashboardRepository _repo;
 
-        public DashboardController(IDashboardRepository dashboardRepository)
+        public DashboardController(IDashboardRepository repo)
         {
-            _dashboardRepository = dashboardRepository;
+            _repo = repo;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(DateTime? from, DateTime? to)
         {
-            var viewModel = new DashboardViewModel
+            var toDate = (to ?? DateTime.Today).Date;
+            var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
+
+            if (fromDate > toDate)
             {
-                TotalBookCount = await _dashboardRepository.GetTotalBookCountAsync(),
-                TotalMemberCount = await _dashboardRepository.GetTotalMemberCountAsync()
+                var tmp = fromDate;
+                fromDate = toDate;
+                toDate = tmp;
+            }
+
+            var totalsMembers = await _repo.GetTotalMemberCountAsync();
+            var totalsBooks = await _repo.GetTotalBookCountAsync();
+
+            var grouped = await _repo.GetIssuesByBorrowerGroupAsync(fromDate, toDate);
+
+            var vm = new DashboardViewModel
+            {
+                TotalMemberCount = totalsMembers,
+                TotalBookCount = totalsBooks,
+                FromDate = fromDate,
+                ToDate = toDate,
+                Labels = grouped.Select(x => x.GroupName).ToList(),
+                Values = grouped.Select(x => x.IssueCount).ToList()
             };
 
-            return View(viewModel);
+            return View(vm);
         }
     }
 }
