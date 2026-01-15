@@ -30,3 +30,7 @@ packages/
 
 # Ignore the legacy ans247lib directory
 ans247lib/
+
+# ASP.NET Core configuration (local settings)
+appsettings.json
+appsettings.Development.json
