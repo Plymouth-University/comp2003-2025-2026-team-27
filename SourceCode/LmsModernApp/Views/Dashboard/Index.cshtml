@@ -62,9 +62,17 @@
                     </div>
                 </form>
 
+                <div id="jsStatus" class="alert alert-secondary">
+                    JavaScript status: <strong>waiting</strong>
+                </div>
+
                 <div style="height: 420px;">
                     <canvas id="issuesByGroupChart"></canvas>
                 </div>
+
+                <div class="mt-2 small text-muted">
+                    Labels count: @(Model.Labels?.Count ?? 0) |
+                    Values count: @(Model.Values?.Count ?? 0)
             </div>
         </div>
     </div>
@@ -74,34 +82,45 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
+        // Visible proof JS executed:
+        const statusBox = document.getElementById("jsStatus");
+        statusBox.className = "alert alert-success";
+        statusBox.innerHTML = 'JavaScript status: <strong>running</strong>';
+
+        console.log("Dashboard scripts running ?");
+        console.log("Chart.js loaded?", typeof Chart !== "undefined");
+
         const labels = @Html.Raw(labelsJson);
         const values = @Html.Raw(valuesJson);
 
-        const ctx = document.getElementById('issuesByGroupChart').getContext('2d');
+        console.log("labels:", labels);
+        console.log("values:", values);
 
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Issues (count)',
-                    data: values,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: true }
+        const canvas = document.getElementById('issuesByGroupChart');
+        const ctx = canvas.getContext('2d');
+
+        if (typeof Chart === "undefined") {
+            statusBox.className = "alert alert-danger";
+            statusBox.innerHTML = 'JavaScript status: <strong>Chart.js NOT loaded</strong> (CDN blocked?)';
+        } else {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Issues (count)',
+                        data: values,
+                        borderWidth: 1
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
                     }
                 }
-            }
-        });
+            });
+        }
     </script>
-}
+    }

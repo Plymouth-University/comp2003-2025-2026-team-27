@@ -17,8 +17,10 @@ namespace LmsModernApp.Controllers
 
         public async Task<IActionResult> Index(DateTime? from, DateTime? to)
         {
-            var toDate = (to ?? DateTime.Today).Date;
-            var fromDate = (from ?? DateTime.Today.AddDays(-30)).Date;
+            var (minDate, maxDate) = await _repo.GetIssueDateRangeAsync();
+
+            var fromDate = from ?? minDate;
+            var toDate = to ?? maxDate;
 
             if (fromDate > toDate)
             {
@@ -27,15 +29,14 @@ namespace LmsModernApp.Controllers
                 toDate = tmp;
             }
 
-            var totalsMembers = await _repo.GetTotalMemberCountAsync();
-            var totalsBooks = await _repo.GetTotalBookCountAsync();
-
+            var totalMembers = await _repo.GetTotalMemberCountAsync();
+            var totalBooks = await _repo.GetTotalBookCountAsync();
             var grouped = await _repo.GetIssuesByBorrowerGroupAsync(fromDate, toDate);
 
             var vm = new DashboardViewModel
             {
-                TotalMemberCount = totalsMembers,
-                TotalBookCount = totalsBooks,
+                TotalMemberCount = totalMembers,
+                TotalBookCount = totalBooks,
                 FromDate = fromDate,
                 ToDate = toDate,
                 Labels = grouped.Select(x => x.GroupName).ToList(),

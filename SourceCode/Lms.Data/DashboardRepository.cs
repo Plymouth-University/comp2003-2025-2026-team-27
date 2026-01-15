@@ -33,6 +33,32 @@ namespace Lms.Data
             
         }
 
+        public async Task<(DateTime MinDate, DateTime MaxDate)> GetIssueDateRangeAsync()
+        {
+            var connStr = _delib.Database.GetConnectionString();
+            if (string.IsNullOrWhiteSpace(connStr))
+                throw new InvalidOperationException("DelibContext has no connection string.");
+
+            await using var conn = new SqlConnection(connStr);
+            await conn.OpenAsync();
+
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+SELECT 
+    MIN(ISSUE_DATE) AS MinIssueDate,
+    MAX(ISSUE_DATE) AS MaxIssueDate
+FROM dbo.ISSUE_AUDIT;
+";
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            await reader.ReadAsync();
+
+            var min = reader.IsDBNull(0) ? DateTime.Today : reader.GetDateTime(0);
+            var max = reader.IsDBNull(1) ? DateTime.Today : reader.GetDateTime(1);
+
+            return (min.Date, max.Date);
+        }
+
         public async Task<int> GetTotalBookCountAsync()
         {
             // Use a NEW SqlConnection so we don't touch/dispose the DbContext's shared connection.
@@ -76,7 +102,7 @@ SELECT
     COUNT(*) AS IssueCount
 FROM dbo.ISSUE_AUDIT ia
 JOIN dbo.BORROWER b
-    ON CONVERT(varchar(25), b.BOR_NO) = ia.ISSUE_BORROWER
+    ON LTRIM(RTRIM(b.BOR_BAR_NO)) = LTRIM(RTRIM(ia.ISSUE_BORROWER))
 WHERE ia.ISSUE_DATE >= @fromDate
   AND ia.ISSUE_DATE <  @toDateExclusive
 GROUP BY ISNULL(NULLIF(LTRIM(RTRIM(b.BOR_GROUP)), ''), 'Unknown')

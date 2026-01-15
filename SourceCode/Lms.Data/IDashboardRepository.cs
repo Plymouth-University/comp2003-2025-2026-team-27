@@ -11,7 +11,9 @@ namespace Lms.Data
         Task<List<IssuesByBorrowerGroupDto>> GetIssuesByBorrowerGroupAsync(DateTime fromDate, DateTime toDate);
         Task<int> GetTotalMemberCountAsync();
         Task<int> GetTotalBookCountAsync();
-        
+
+        Task<(DateTime MinDate, DateTime MaxDate)> GetIssueDateRangeAsync();
+
     }
     public class IssuesByBorrowerGroupDto
     {
