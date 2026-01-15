@@ -3,124 +3,357 @@
 
 @{
     ViewData["Title"] = "Dashboard";
-    var labelsJson = JsonSerializer.Serialize(Model.Labels);
-    var valuesJson = JsonSerializer.Serialize(Model.Values);
+
+    // Charts data coming from controller
+    var labelsJson = JsonSerializer.Serialize(Model.Labels ?? new List<string>());
+    var valuesJson = JsonSerializer.Serialize(Model.Values ?? new List<int>());
+
+    // For active tab highlighting
+    string action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    string controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    Func<string, string, string> isActive = (c, a) =>
+        (string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(action, a, StringComparison.OrdinalIgnoreCase))
+        ? "active" : "";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome to your Dashboard</h1>
+<!-- TOP HEADER -->
+<div class="topbar">
+    <div class="brand">
+        <span class="brand-badge">247</span>
+        <span class="brand-name">lib.com</span>
+    </div>
+
+    <div class="topbar-right">
+        <span class="muted">text size:</span>
+        <a href="#" class="toplink">Normal</a>
+        <a href="#" class="toplink">Larger</a>
+        <a href="#" class="toplink">Largest</a>
+        <span class="muted ms-2">staff</span>
+        <span class="muted">|</span>
+        <a asp-controller="Account" asp-action="Logout" class="toplink">LogOut</a>
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Total Books</h5>
-                <p class="card-text display-3">@Model.TotalBookCount</p>
-                <a href="#" class="btn btn-primary">View all books</a>
+
+<nav class="nav-tabs-modern">
+    <a class="navtab @isActive("Dashboard", "Index")" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+    <a class="navtab" asp-controller="Authorities" asp-action="Index">Authorities</a>
+    <a class="navtab" asp-controller="Users" asp-action="Index">Users</a>
+    <a class="navtab" asp-controller="Catalogue" asp-action="Index">Catalogue</a>
+    <a class="navtab" asp-controller="Circulation" asp-action="Index">Circulation</a>
+    <a class="navtab" asp-controller="Reports" asp-action="Index">Reports</a>
+    <a class="navtab" asp-controller="StockItems" asp-action="Index">Stock Items</a>
+</nav>
+
+<hr class="thin-rule" />
+
+
+<form method="get" class="filter-row">
+    <div class="filter-item">
+        <label class="filter-label">Filter:</label>
+        <select class="form-select form-select-sm" name="filter">
+            <option value="Loan">Loan</option>
+            <option value="Returns">Returns</option>
+            <option value="Overdue">Overdue</option>
+        </select>
+    </div>
+
+    <div class="filter-item">
+        <label class="filter-label">Group By:</label>
+        <select class="form-select form-select-sm" name="groupBy">
+            <option value="Class">Class</option>
+            <option value="Subject">Subject</option>
+            <option value="MemberType">Member Type</option>
+        </select>
+    </div>
+
+    <div class="filter-item checkbox">
+        <input class="form-check-input" type="checkbox" id="overdueOnly" name="overdueOnly" />
+        <label class="form-check-label" for="overdueOnly">Overdue items only</label>
+    </div>
+</form>
+
+
+<div class="row g-3 mt-1">
+    
+    <div class="col-12 col-lg-6">
+        <div class="dash-panel">
+            <div class="dash-panel-header"></div>
+
+            <div class="dash-panel-body">
+                <div class="chart-shell">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dash-panel-footer">
+                <a href="#" class="footer-link">Download to Excel</a>
+                <a asp-controller="Reports" asp-action="Index" class="footer-link">Reports</a>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Total Members</h5>
-                <p class="card-text display-3">@Model.TotalMemberCount</p>
-                <a href="#" class="btn btn-primary">View all members</a>
-            </div>
-        </div>
-    </div>
-</div>
+    
+    <div class="col-12 col-lg-6">
+        <div class="dash-panel">
+            <div class="dash-panel-header"></div>
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- LEFT HALF -->
-        <div class="col-12 col-lg-6">
-            <div class="p-3 border rounded">
-                <h4>Left Panel</h4>
-                <p>This area is reserved for your other dashboard content.</p>
-            </div>
-        </div>
-
-        <!-- RIGHT HALF -->
-        <div class="col-12 col-lg-6">
-            <div class="p-3 border rounded">
-                <h4 class="mb-3">Issues by Subject Group</h4>
-
-                <form method="get" class="d-flex align-items-end gap-2 mb-3">
-                    <div>
-                        <label class="form-label mb-1">Issue dates between</label>
-                        <input class="form-control" type="date" name="from" value="@Model.FromDate.ToString("yyyy-MM-dd")" />
-                    </div>
-                    <div>
-                        <label class="form-label mb-1">&nbsp;</label>
-                        <input class="form-control" type="date" name="to" value="@Model.ToDate.ToString("yyyy-MM-dd")" />
-                    </div>
-                    <div>
-                        <button class="btn btn-primary" type="submit">Search</button>
-                    </div>
-                </form>
-
-                <div id="jsStatus" class="alert alert-secondary">
-                    JavaScript status: <strong>waiting</strong>
+            <div class="dash-panel-body">
+                <div class="chart-shell">
+                    <canvas id="barChart"></canvas>
                 </div>
 
-                <div style="height: 420px;">
-                    <canvas id="issuesByGroupChart"></canvas>
+                <div class="date-row">
+                    <span class="date-label">Issue dates between</span>
+
+                    <input class="form-control form-control-sm date-input"
+                           type="date" name="from"
+                           value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+
+                    <span class="date-label">and</span>
+
+                    <input class="form-control form-control-sm date-input"
+                           type="date" name="to"
+                           value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+
+                    <button class="btn btn-primary btn-sm" type="submit">Search</button>
                 </div>
 
-                <div class="mt-2 small text-muted">
-                    Labels count: @(Model.Labels?.Count ?? 0) |
-                    Values count: @(Model.Values?.Count ?? 0)
+                
+                <div id="jsStatus" class="mt-2 small text-muted">
+                    JavaScript: waiting
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    
+    .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .brand-badge {
+        background: #2b78ff;
+        color: #fff;
+        font-weight: 700;
+        padding: 6px 10px;
+        border-radius: 4px;
+        line-height: 1;
+    }
+
+    .brand-name {
+        font-weight: 700;
+        font-size: 20px;
+        color: #d11b2d;
+    }
+
+    .topbar-right {
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .muted {
+        color: #6c757d;
+    }
+
+    .toplink {
+        text-decoration: none;
+    }
+
+        .toplink:hover {
+            text-decoration: underline;
+        }
+
+    .thin-rule {
+        margin: 6px 0 10px;
+    }
+
+    
+    .nav-tabs-modern {
+        display: flex;
+        gap: 10px;
+        padding: 0 12px 8px;
+        flex-wrap: wrap;
+    }
+
+    .navtab {
+        background: #1f66d1;
+        color: #fff;
+        text-decoration: none;
+        padding: 6px 14px;
+        border-radius: 3px;
+        font-weight: 600;
+        border: 1px solid #0f56c0;
+        transition: transform .05s ease, filter .15s ease;
+    }
+
+        .navtab:hover {
+            filter: brightness(1.1);
+        }
+
+        .navtab:active {
+            transform: translateY(1px);
+        }
+
+        .navtab.active {
+            background: #0f56c0;
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+        }
+
+    
+    .filter-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 8px 12px;
+        flex-wrap: wrap;
+    }
+
+    .filter-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .filter-item.checkbox {
+            gap: 8px;
+        }
+
+    .filter-label {
+        margin: 0;
+        color: #6c757d;
+    }
+
+    
+    .dash-panel {
+        border: 1px solid #d9e3f4;
+        border-radius: 3px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .dash-panel-header {
+        height: 14px;
+        background: #1f66d1; /* blue header strip */
+    }
+
+    .dash-panel-body {
+        padding: 12px;
+    }
+
+    .chart-shell {
+        border: 1px dashed #c8d6f0;
+        border-radius: 3px;
+        height: 420px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fbfdff;
+    }
+
+        .chart-shell canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+    .dash-panel-footer {
+        padding: 8px 12px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
+    }
+
+    .footer-link {
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+    .date-row {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .date-label {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .date-input {
+        width: 160px;
+    }
+</style>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // Visible proof JS executed:
-        const statusBox = document.getElementById("jsStatus");
-        statusBox.className = "alert alert-success";
-        statusBox.innerHTML = 'JavaScript status: <strong>running</strong>';
-
-        console.log("Dashboard scripts running ?");
-        console.log("Chart.js loaded?", typeof Chart !== "undefined");
+        const status = document.getElementById("jsStatus");
+        if (status) status.textContent = "JavaScript: running";
 
         const labels = @Html.Raw(labelsJson);
         const values = @Html.Raw(valuesJson);
 
-        console.log("labels:", labels);
-        console.log("values:", values);
+        
+        const safeLabels = (labels && labels.length) ? labels : ["No data"];
+        const safeValues = (values && values.length) ? values : [0];
 
-        const canvas = document.getElementById('issuesByGroupChart');
-        const ctx = canvas.getContext('2d');
-
-        if (typeof Chart === "undefined") {
-            statusBox.className = "alert alert-danger";
-            statusBox.innerHTML = 'JavaScript status: <strong>Chart.js NOT loaded</strong> (CDN blocked?)';
-        } else {
-            new Chart(ctx, {
-                type: 'bar',
+        
+        const pieEl = document.getElementById("pieChart");
+        if (pieEl && typeof Chart !== "undefined") {
+            new Chart(pieEl.getContext("2d"), {
+                type: "pie",
                 data: {
-                    labels: labels,
+                    labels: safeLabels,
+                    datasets: [{ data: safeValues }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        
+        const barEl = document.getElementById("barChart");
+        if (barEl && typeof Chart !== "undefined") {
+            new Chart(barEl.getContext("2d"), {
+                type: "bar",
+                data: {
+                    labels: safeLabels,
                     datasets: [{
-                        label: 'Issues (count)',
-                        data: values,
+                        label: "Issues (count)",
+                        data: safeValues,
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
+                    scales: { y: { beginAtZero: true } }
                 }
             });
         }
     </script>
-    }
+}

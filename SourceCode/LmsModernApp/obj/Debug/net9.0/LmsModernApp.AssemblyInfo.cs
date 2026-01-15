@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LmsModernApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5dc06e33e1dda6904675f2d25fd5cb6a0cb130e6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+772dee2a475f58c438657f81aeab174db1e95f6a")]
 [assembly: System.Reflection.AssemblyProductAttribute("LmsModernApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LmsModernApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
