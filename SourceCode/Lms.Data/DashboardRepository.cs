@@ -11,11 +11,16 @@ using System.Threading.Tasks;
 
 namespace Lms.Data
 {
+    //Implements data queries for the DELIB database
     public class DashboardRepository : IDashboardRepository
     {
 
         private readonly DelibContext _delib;
+        
+        //Log to check connection route
         private readonly ILogger<DashboardRepository> _logger;
+        
+        //Uses DelibContext to access legacy data
         public DashboardRepository(DelibContext delib, ILogger<DashboardRepository> logger)
         {
             _delib = delib;
@@ -25,6 +30,7 @@ namespace Lms.Data
             _logger.LogInformation("DELIB connection string in use: {ConnStr}", _delib.Database.GetDbConnection().ConnectionString);
         }
 
+        //Counts all borrowers in the BORROWER table
         public async Task<int> GetTotalMemberCountAsync()
         {
             // Borrower count from dbo.BORROWER
@@ -33,6 +39,7 @@ namespace Lms.Data
             
         }
 
+        //Gets the date range of the BORROWER table
         public async Task<(DateTime MinDate, DateTime MaxDate)> GetIssueDateRangeAsync()
         {
             var connStr = _delib.Database.GetConnectionString();
@@ -59,6 +66,7 @@ FROM dbo.ISSUE_AUDIT;
             return (min.Date, max.Date);
         }
 
+        //Counts the unique issued items from ISSUE_AUDIT
         public async Task<int> GetTotalBookCountAsync()
         {
             // Use a NEW SqlConnection so we don't touch/dispose the DbContext's shared connection.
@@ -79,7 +87,7 @@ WHERE ia.ISSUE_ITEM IS NOT NULL;
                 return scalar is int i ? i : Convert.ToInt32(scalar);
             }
         
-
+        //Groups record by borrower group for the bar chart
         public async Task<List<IssuesByBorrowerGroupDto>> GetIssuesByBorrowerGroupAsync(DateTime fromDate, DateTime toDate)
         {
             // Inclusive date range: [fromDate 00:00:00] to [toDate 23:59:59.9999999]
