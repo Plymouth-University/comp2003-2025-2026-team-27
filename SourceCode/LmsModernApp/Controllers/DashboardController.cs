@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LmsModernApp.Controllers
 {
-    //Handles dashboard page requests and preps data
+    [Authorize(AuthenticationSchemes = "StaffAuth")]
     public class DashboardController : Controller
     {
         private readonly IDashboardRepository _repo;

@@ -1,0 +1,13 @@
+# .NET
+[Bb]in/
+[Oo]bj/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+.vscode/
+
+# Configuration
+LmsModernApp/appsettings.Development.json

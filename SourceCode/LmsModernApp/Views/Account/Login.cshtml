@@ -1,0 +1,49 @@
+@model LmsModernApp.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Staff Login";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <section>
+            <form asp-controller="Account" asp-action="Login" asp-route-returnurl="@Model.ReturnUrl" method="post" class="mt-4 p-4 border rounded shadow-sm bg-light">
+                <h2 class="text-center mb-4">@ViewData["Title"]</h2>
+                <hr />
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                
+                <div class="form-floating mb-3">
+                    <input asp-for="Username" class="form-control" autocomplete="username" aria-required="true" placeholder="username" />
+                    <label asp-for="Username" class="form-label"></label>
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+                
+                <div class="form-floating mb-3">
+                    <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <label asp-for="Password" class="form-label"></label>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                
+                <div class="checkbox mb-3">
+                    <label asp-for="RememberMe" class="form-label">
+                        <input class="form-check-input" asp-for="RememberMe" />
+                        @Html.DisplayNameFor(m => m.RememberMe)
+                    </label>
+                </div>
+                
+                <div>
+                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                </div>
+                
+                @if (ViewData["ReturnUrl"] != null)
+                {
+                    <input type="hidden" name="ReturnUrl" value="@ViewData["ReturnUrl"]" />
+                }
+            </form>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
