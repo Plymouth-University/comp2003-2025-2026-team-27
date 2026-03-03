@@ -154,7 +154,7 @@ namespace LmsModernApp.Controllers
         {
             await HttpContext.SignOutAsync("StaffAuth");
             HttpContext.Session.Clear();
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Login", "Account");
         }
 
         [HttpGet]
