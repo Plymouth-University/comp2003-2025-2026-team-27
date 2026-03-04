@@ -1,5 +1,12 @@
 <ul class="navbar-nav">
-@if (User.Identity?.IsAuthenticated == true)
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    bool isLoginPage = string.Equals(controller, "Account", StringComparison.OrdinalIgnoreCase) && 
+                      string.Equals(action, "Login", StringComparison.OrdinalIgnoreCase);
+}
+
+@if (User.Identity?.IsAuthenticated == true && !isLoginPage)
 {
     var locationName = User.FindFirst("WorkingLocationName")?.Value;
     
