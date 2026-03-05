@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using LmsModernApp.ViewModels;
 
 namespace LmsModernApp.Controllers
 {
@@ -8,7 +9,19 @@ namespace LmsModernApp.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            var model = new CatalogueViewModel
+            {
+                SearchText = string.Empty,
+                SearchMethod = "KW Anywhere",
+                LibGroup = "LIBRARY",
+                OpacViewRestriction = string.Empty,
+                Security = "0",
+                LibraryGroup = string.Empty,
+                TemplateId = string.Empty,
+                Items = new List<CatalogueRowViewModel>()
+            };
+
+            return View(model);
         }
     }
 }

@@ -1,7 +1,491 @@
+﻿@model LmsModernApp.ViewModels.CatalogueViewModel
 @{
     ViewData["Title"] = "Catalogue";
+    Layout = "_Layout";
 }
 
 <partial name="_DashboardHeader" />
 
-<h2>Catalogue</h2>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    :root {
+        --primary: #1f66d1;
+        --primary-light: #2b78ff;
+        --accent: #d11b2d;
+        --surface: #f8f9fc;
+        --sidebar-bg: #f1f4fb;
+        --border: #dde3f0;
+        --text-main: #1e2a45;
+        --text-muted: #6b7a99;
+        --table-header: #1f66d1;
+        --action-hover: #e8edf8;
+        --radius: 6px;
+        --shadow-sm: 0 1px 3px rgba(26,79,186,.10);
+        --shadow-md: 0 4px 16px rgba(26,79,186,.12);
+    }
+
+    .catalogue-wrap, .catalogue-wrap * {
+        font-family: 'DM Sans', sans-serif;
+        box-sizing: border-box;
+    }
+
+    .catalogue-wrap {
+        display: flex;
+        min-height: calc(100vh - 120px);
+        background: var(--surface);
+        margin: 0 -12px; /* counteract _Layout container padding */
+    }
+
+    /* ── Sidebar ── */
+    .cat-sidebar {
+        width: 210px;
+        min-width: 210px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        padding: 16px 0 30px;
+    }
+
+    .sidebar-section-title {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        padding: 0 18px 6px;
+        margin-top: 14px;
+    }
+
+    .cat-sidebar a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 18px;
+        font-size: 13px;
+        color: var(--text-main);
+        text-decoration: none;
+        border-left: 3px solid transparent;
+        transition: background .15s, border-color .15s, color .15s;
+    }
+
+        .cat-sidebar a:hover {
+            background: var(--action-hover);
+            border-left-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+    .cat-sidebar .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--border);
+        flex-shrink: 0;
+    }
+
+    .sidebar-divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 10px 18px;
+    }
+
+    /* ── Main ── */
+    .cat-main {
+        flex: 1;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: hidden;
+    }
+
+    .module-title {
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    /* ── Toolbar ── */
+    .cat-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .tb-divider {
+        width: 1px;
+        background: var(--border);
+        margin: 2px 3px;
+        align-self: stretch;
+    }
+
+    .tb-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 9px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--primary);
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background .13s, color .13s, border-color .13s;
+    }
+
+        .tb-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .tb-btn.tb-danger {
+            color: var(--accent);
+            border-color: #f5c6cb;
+        }
+
+            .tb-btn.tb-danger:hover {
+                background: var(--accent);
+                color: #fff;
+                border-color: var(--accent);
+            }
+
+    /* ── Search panel ── */
+    .search-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 16px 10px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .search-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .search-field {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+        .search-field label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .search-field input,
+        .search-field select {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            padding: 5px 9px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--text-main);
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+            .search-field input:focus,
+            .search-field select:focus {
+                border-color: var(--primary-light);
+                box-shadow: 0 0 0 3px rgba(43,120,255,.12);
+            }
+
+            .search-field input[type="text"] {
+                width: 190px;
+            }
+
+    .meta-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .meta-field {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .meta-field label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .meta-field input {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            padding: 3px 7px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            width: 90px;
+            outline: none;
+        }
+
+    /* ── Content area ── */
+    .content-area {
+        display: flex;
+        gap: 12px;
+        flex: 1;
+    }
+
+    .table-wrap {
+        flex: 1;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .cat-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+        .cat-table thead tr {
+            background: var(--table-header);
+        }
+
+        .cat-table thead th {
+            padding: 9px 13px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .cat-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .12s;
+        }
+
+            .cat-table tbody tr:hover {
+                background: var(--action-hover);
+            }
+
+        .cat-table tbody td {
+            padding: 9px 13px;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .cat-table .empty-row td {
+            color: var(--text-muted);
+            font-style: italic;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+    /* ── Right action panel ── */
+    .action-panel {
+        width: 108px;
+        min-width: 108px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .act-btn {
+        display: block;
+        width: 100%;
+        padding: 7px 10px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        text-align: center;
+        color: var(--primary);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+        transition: background .13s, color .13s, border-color .13s, box-shadow .13s;
+    }
+
+        .act-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .act-btn.act-danger {
+            color: var(--accent);
+            border-color: #f5c6cb;
+        }
+
+            .act-btn.act-danger:hover {
+                background: var(--accent);
+                color: #fff;
+                border-color: var(--accent);
+            }
+
+    .act-divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2px 0;
+    }
+</style>
+
+<div class="catalogue-wrap">
+
+    <!-- ── Sidebar ── -->
+    <aside class="cat-sidebar">
+        <div class="sidebar-section-title">Templates</div>
+        <a asp-controller="Catalogue" asp-action="Book"><span class="dot"></span> Book</a>
+        <a asp-controller="Catalogue" asp-action="News"><span class="dot"></span> News</a>
+        <a asp-controller="Catalogue" asp-action="Event"><span class="dot"></span> Event</a>
+        <a asp-controller="Catalogue" asp-action="UploadFile"><span class="dot"></span> Upload File</a>
+        <a asp-controller="Catalogue" asp-action="WebSiteUrl"><span class="dot"></span> Web Site – URL</a>
+        <a asp-controller="Catalogue" asp-action="Discussion"><span class="dot"></span> Discussion</a>
+        <a asp-controller="Catalogue" asp-action="CatalogueTemplate"><span class="dot"></span> Catalogue Template</a>
+        <a asp-controller="Catalogue" asp-action="AmendWebsite"><span class="dot"></span> Amend Website</a>
+        <hr class="sidebar-divider" />
+        <a asp-controller="Catalogue" asp-action="Z3950Search">Z39.50 Search</a>
+        <a asp-controller="Catalogue" asp-action="NielsenImport">Nielsen Import</a>
+        <a asp-controller="Catalogue" asp-action="MassMaintenance">Mass Maintenance</a>
+        <a asp-controller="Catalogue" asp-action="UploadCatalogueFiles">Upload Catalogue Files</a>
+        <a asp-controller="Catalogue" asp-action="Archive">Archive</a>
+    </aside>
+
+    <!-- ── Main ── -->
+    <main class="cat-main">
+
+        <div class="module-title">Catalogue Module</div>
+
+        <!-- Toolbar -->
+        <div class="cat-toolbar">
+            <a asp-controller="Catalogue" asp-action="Clear" class="tb-btn">Clear</a>
+            <a asp-controller="Catalogue" asp-action="Duplicate" class="tb-btn">Duplicate</a>
+            <a asp-controller="Catalogue" asp-action="Update" class="tb-btn">Update</a>
+            <a asp-controller="Catalogue" asp-action="Delete" class="tb-btn tb-danger">Delete</a>
+            <a asp-controller="Catalogue" asp-action="Query" class="tb-btn">Query</a>
+            <div class="tb-divider"></div>
+            <a asp-controller="Catalogue" asp-action="UploadPictures" class="tb-btn">Upload Pictures</a>
+            <a asp-controller="Catalogue" asp-action="RemovePicture" class="tb-btn">Remove Picture</a>
+            <div class="tb-divider"></div>
+            <a asp-controller="Catalogue" asp-action="TableView" class="tb-btn">Table View</a>
+            <a asp-controller="Catalogue" asp-action="MarcView" class="tb-btn">MARC View</a>
+            <a asp-controller="Catalogue" asp-action="Export" class="tb-btn">Export</a>
+            <div class="tb-divider"></div>
+            <a asp-controller="Catalogue" asp-action="First" class="tb-btn">&#10218;&#10218; First</a>
+            <a asp-controller="Catalogue" asp-action="Prev" class="tb-btn">&#10218; Prev</a>
+            <a asp-controller="Catalogue" asp-action="Next" class="tb-btn">Next &#10219;</a>
+            <a asp-controller="Catalogue" asp-action="Last" class="tb-btn">Last &#10219;&#10219;</a>
+            <a asp-controller="Catalogue" asp-action="More" class="tb-btn">More</a>
+        </div>
+
+        <!-- Search panel -->
+        <div class="search-panel">
+            <div class="search-row">
+                <div class="search-field">
+                    <label>Search Text</label>
+                    <input type="text" value="@Model.SearchText" placeholder="Enter search…" />
+                </div>
+                <div class="search-field">
+                    <label>Search Method</label>
+                    <select>
+                        <option selected="@(Model.SearchMethod == "KW Anywhere")">KW Anywhere</option>
+                        <option selected="@(Model.SearchMethod == "KW Exact")">KW Exact</option>
+                        <option selected="@(Model.SearchMethod == "Title")">Title</option>
+                        <option selected="@(Model.SearchMethod == "Author")">Author</option>
+                        <option selected="@(Model.SearchMethod == "ISBN")">ISBN</option>
+                    </select>
+                </div>
+                <div class="search-field">
+                    <label>Lib Group</label>
+                    <select>
+                        <option>LIBRARY</option>
+                    </select>
+                </div>
+            </div>
+            <div class="meta-row">
+                <div class="meta-field">
+                    <label>OPAC View Restriction</label>
+                    <input type="text" value="@Model.OpacViewRestriction" />
+                </div>
+                <div class="meta-field">
+                    <label>Security</label>
+                    <input type="text" value="@Model.Security" style="width:50px;" />
+                </div>
+                <div class="meta-field">
+                    <label>Library Group</label>
+                    <input type="text" value="@Model.LibraryGroup" />
+                </div>
+                <div class="meta-field">
+                    <label>Template Id</label>
+                    <input type="text" value="@Model.TemplateId" style="width:70px;" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Table + right actions -->
+        <div class="content-area">
+            <div class="table-wrap">
+                <table class="cat-table">
+                    <thead>
+                        <tr>
+                            <th style="width:100px;">Tag</th>
+                            <th style="width:40%;">Tag Description</th>
+                            <th>Tag Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items != null && Model.Items.Any())
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>@item.Tag</td>
+                                    <td>@item.TagDescription</td>
+                                    <td>@item.TagDetails</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr class="empty-row">
+                                <td colspan="3">No catalogue records found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Right action panel -->
+            <div class="action-panel">
+                <a asp-controller="Catalogue" asp-action="Add" class="act-btn">Add</a>
+                <a asp-controller="Catalogue" asp-action="Insert" class="act-btn">Insert</a>
+                <a asp-controller="Catalogue" asp-action="Replace" class="act-btn">Replace</a>
+                <a asp-controller="Catalogue" asp-action="Modify" class="act-btn">Modify</a>
+                <hr class="act-divider" />
+                <a asp-controller="Catalogue" asp-action="Delete" class="act-btn act-danger">Delete</a>
+                <a asp-controller="Catalogue" asp-action="Query" class="act-btn">Query</a>
+            </div>
+        </div>
+
+    </main>
+</div>
