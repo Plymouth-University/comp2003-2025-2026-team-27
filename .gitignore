@@ -32,3 +32,6 @@ packages/
 ans247lib/
 
 
+/SourceCode/LmsModernApp/appsettings.json
+/SourceCode/LmsModernApp/bin/Debug/net9.0/appsettings.json
+/SourceCode/LmsModernApp/bin/Debug/net9.0/appsettings.Development.json
