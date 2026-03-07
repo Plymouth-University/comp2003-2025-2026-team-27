@@ -10,5 +10,10 @@ namespace LmsModernApp.Controllers
         {
             return View();
         }
+
+        public IActionResult AdvancedSearch()
+        {
+            return View();
+        }
     }
 }

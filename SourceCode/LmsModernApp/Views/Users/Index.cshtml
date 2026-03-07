@@ -5,3 +5,170 @@
 <partial name="_DashboardHeader" />
 
 <h2>Users</h2>
+
+<hr />
+
+<h3>Advanced Borrower Search</h3>
+
+<p class="text-muted">
+    Recreated from the legacy advanced borrower query builder. Staff can define query conditions using fields, operators and logical connectors.
+</p>
+
+<div class="mb-3">
+    <label class="form-label">Query Description</label>
+    <input type="text" class="form-control" name="queryDescription" />
+</div>
+
+<div class="mb-3">
+    <button class="btn btn-outline-secondary" type="button">Clear/New</button>
+    <button class="btn btn-outline-primary" type="button">Save</button>
+    <button class="btn btn-outline-primary" type="button">Select</button>
+    <button class="btn btn-primary" type="button">Query</button>
+    <button class="btn btn-outline-dark" type="button">Count</button>
+    <button class="btn btn-outline-secondary" type="button">Query a File</button>
+    <button class="btn btn-outline-secondary" type="button">Order By</button>
+</div>
+
+<div class="mb-3">
+    <button class="btn btn-success" type="button">Add Condition</button>
+    <button class="btn btn-danger" type="button">Remove Condition</button>
+</div>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>(</th>
+            <th>Column</th>
+            <th>Operator</th>
+            <th>Where</th>
+            <th>)</th>
+            <th>And/Or</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><input class="form-control" type="text" style="width:60px;" /></td>
+            <td>
+                <select class="form-select">
+                    <option>Borrower Number</option>
+                    <option>Barcode</option>
+                    <option>Surname</option>
+                    <option>Given Name</option>
+                    <option>Email</option>
+                    <option>Status</option>
+                    <option>Class</option>
+                    <option>Group</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select">
+                    <option>=</option>
+                    <option>&lt;</option>
+                    <option>&gt;</option>
+                    <option>&gt;=</option>
+                    <option>&lt;=</option>
+                    <option>!=</option>
+                    <option>IN</option>
+                    <option>NOT IN</option>
+                    <option>LIKE</option>
+                    <option>IS NULL</option>
+                    <option>IS NOT NULL</option>
+                </select>
+            </td>
+            <td><input class="form-control" type="text" /></td>
+            <td><input class="form-control" type="text" style="width:60px;" /></td>
+            <td>
+                <select class="form-select">
+                    <option>AND</option>
+                    <option>OR</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td><input class="form-control" type="text" style="width:60px;" /></td>
+            <td>
+                <select class="form-select">
+                    <option>Borrower Number</option>
+                    <option>Barcode</option>
+                    <option>Surname</option>
+                    <option>Given Name</option>
+                    <option>Email</option>
+                    <option>Status</option>
+                    <option>Class</option>
+                    <option>Group</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select">
+                    <option>=</option>
+                    <option>&lt;</option>
+                    <option>&gt;</option>
+                    <option>&gt;=</option>
+                    <option>&lt;=</option>
+                    <option>!=</option>
+                    <option>IN</option>
+                    <option>NOT IN</option>
+                    <option>LIKE</option>
+                    <option>IS NULL</option>
+                    <option>IS NOT NULL</option>
+                </select>
+            </td>
+            <td><input class="form-control" type="text" /></td>
+            <td><input class="form-control" type="text" style="width:60px;" /></td>
+            <td>
+                <select class="form-select">
+                    <option>AND</option>
+                    <option>OR</option>
+                </select>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="alert alert-info mt-3">
+    Query execution, saved queries, file selection and ordering will be connected to repository-based logic in the next iteration.
+</div>
+
+<hr />
+
+<h3>Borrower Reading List</h3>
+
+<p class="text-muted">
+    Recreated from the legacy borrower reading list page. This section displays items associated with a selected borrower.
+</p>
+
+<div class="mb-3">
+    <label class="form-label">Borrower</label>
+    <input class="form-control" type="text" placeholder="Enter borrower name or ID" />
+</div>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Year</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Introduction to Algorithms</td>
+            <td>Cormen</td>
+            <td>2009</td>
+            <td>Available</td>
+        </tr>
+        <tr>
+            <td>Database Systems</td>
+            <td>Elmasri</td>
+            <td>2016</td>
+            <td>Checked Out</td>
+        </tr>
+        <tr>
+            <td>Operating System Concepts</td>
+            <td>Silberschatz</td>
+            <td>2018</td>
+            <td>Available</td>
+        </tr>
+    </tbody>
+</table>
