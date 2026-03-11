@@ -1,0 +1,9 @@
+<div class="col-md-2">
+    <div class="list-group">
+        <a asp-action="Index" asp-controller="Users" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">Users</a>
+        <a asp-action="FileList" asp-controller="Users" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "FileList" ? "active" : "")">File list</a>
+        <a asp-action="ReadingList" asp-controller="Users" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "ReadingList" ? "active" : "")">Reading list</a>
+        <a asp-action="AdvancedSearch" asp-controller="Users" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "AdvancedSearch" ? "active" : "")">Advanced search</a>
+        <a asp-action="Import" asp-controller="Users" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "Import" ? "active" : "")">Import</a>
+    </div>
+</div>

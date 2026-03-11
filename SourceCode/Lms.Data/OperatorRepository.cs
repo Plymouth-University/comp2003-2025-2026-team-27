@@ -37,7 +37,7 @@ namespace Lms.Data
             }
 
             // Scenario B: Restricted Access (based on Library Groups)
-            // 1. Get Primary Group from Operator's Default Location
+            // 1. Get Primary Group from Operator's Default LocatiYeson
             var primaryLocation = await _context.LibLocations
                 .FirstOrDefaultAsync(l => l.LlCode == op.OperLlCode);
 

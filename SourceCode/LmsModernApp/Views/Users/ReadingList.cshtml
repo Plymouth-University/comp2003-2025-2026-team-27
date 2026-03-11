@@ -1,0 +1,54 @@
+@{
+    ViewData["Title"] = "Reading list";
+}
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-4">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <h2>Borrower Reading List</h2>
+        <hr />
+
+        <p class="text-muted">
+            Recreated from the legacy borrower reading list page. This section displays items associated with a selected borrower.
+        </p>
+
+        <div class="mb-3">
+            <label class="form-label">Borrower</label>
+            <input class="form-control" type="text" placeholder="Enter borrower name or ID" />
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Year</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Introduction to Algorithms</td>
+                    <td>Cormen</td>
+                    <td>2009</td>
+                    <td>Available</td>
+                </tr>
+                <tr>
+                    <td>Database Systems</td>
+                    <td>Elmasri</td>
+                    <td>2016</td>
+                    <td>Checked Out</td>
+                </tr>
+                <tr>
+                    <td>Operating System Concepts</td>
+                    <td>Silberschatz</td>
+                    <td>2018</td>
+                    <td>Available</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

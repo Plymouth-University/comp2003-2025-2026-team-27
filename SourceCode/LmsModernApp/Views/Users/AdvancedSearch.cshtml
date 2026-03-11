@@ -1,0 +1,133 @@
+@{
+    ViewData["Title"] = "Advanced search";
+}
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-4">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <h2>Advanced Borrower Search</h2>
+        <hr />
+
+        <p class="text-muted">
+            Recreated from the legacy advanced borrower query builder. Staff can define query conditions using fields, operators and logical connectors.
+        </p>
+
+        <div class="mb-3">
+            <label class="form-label">Query Description</label>
+            <input type="text" class="form-control" name="queryDescription" />
+        </div>
+
+        <div class="mb-3">
+            <button class="btn btn-outline-secondary" type="button">Clear/New</button>
+            <button class="btn btn-outline-primary" type="button">Save</button>
+            <button class="btn btn-outline-primary" type="button">Select</button>
+            <button class="btn btn-primary" type="button">Query</button>
+            <button class="btn btn-outline-dark" type="button">Count</button>
+            <button class="btn btn-outline-secondary" type="button">Query a File</button>
+            <button class="btn btn-outline-secondary" type="button">Order By</button>
+        </div>
+
+        <div class="mb-3">
+            <button class="btn btn-success" type="button">Add Condition</button>
+            <button class="btn btn-danger" type="button">Remove Condition</button>
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>(</th>
+                    <th>Column</th>
+                    <th>Operator</th>
+                    <th>Where</th>
+                    <th>)</th>
+                    <th>And/Or</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input class="form-control" type="text" style="width:60px;" /></td>
+                    <td>
+                        <select class="form-select">
+                            <option>Borrower Number</option>
+                            <option>Barcode</option>
+                            <option>Surname</option>
+                            <option>Given Name</option>
+                            <option>Email</option>
+                            <option>Status</option>
+                            <option>Class</option>
+                            <option>Group</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select">
+                            <option>=</option>
+                            <option>&lt;</option>
+                            <option>&gt;</option>
+                            <option>&gt;=</option>
+                            <option>&lt;=</option>
+                            <option>!=</option>
+                            <option>IN</option>
+                            <option>NOT IN</option>
+                            <option>LIKE</option>
+                            <option>IS NULL</option>
+                            <option>IS NOT NULL</option>
+                        </select>
+                    </td>
+                    <td><input class="form-control" type="text" /></td>
+                    <td><input class="form-control" type="text" style="width:60px;" /></td>
+                    <td>
+                        <select class="form-select">
+                            <option>AND</option>
+                            <option>OR</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td><input class="form-control" type="text" style="width:60px;" /></td>
+                    <td>
+                        <select class="form-select">
+                            <option>Borrower Number</option>
+                            <option>Barcode</option>
+                            <option>Surname</option>
+                            <option>Given Name</option>
+                            <option>Email</option>
+                            <option>Status</option>
+                            <option>Class</option>
+                            <option>Group</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select">
+                            <option>=</option>
+                            <option>&lt;</option>
+                            <option>&gt;</option>
+                            <option>&gt;=</option>
+                            <option>&lt;=</option>
+                            <option>!=</option>
+                            <option>IN</option>
+                            <option>NOT IN</option>
+                            <option>LIKE</option>
+                            <option>IS NULL</option>
+                            <option>IS NOT NULL</option>
+                        </select>
+                    </td>
+                    <td><input class="form-control" type="text" /></td>
+                    <td><input class="form-control" type="text" style="width:60px;" /></td>
+                    <td>
+                        <select class="form-select">
+                            <option>AND</option>
+                            <option>OR</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-info mt-3">
+            Query execution, saved queries, file selection and ordering will be connected to repository-based logic in the next iteration.
+        </div>
+    </div>
+</div>
