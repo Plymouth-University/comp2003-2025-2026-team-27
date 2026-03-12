@@ -18,6 +18,14 @@ namespace Lms.Data
         Task<List<LookupItem>> GetTitlesAsync();
         Task<List<LookupItem>> GetAreasAsync();
         Task<List<LookupItem>> GetWardsAsync();
+
+        // File Set (Borrower List) Management
+        Task<List<FileSetName>> GetFileSetsByOperatorAsync(string operatorName, int page, int pageSize);
+        Task<int> GetFileSetsCountByOperatorAsync(string operatorName);
+        Task<FileSetName?> GetFileSetByNumberAsync(int fileNumber);
+        Task<bool> SaveFileSetNameAsync(FileSetName fileSet);
+        Task<bool> DeleteFileSetAsync(int fileNumber);
+        Task<bool> EmptyFileSetAsync(int fileNumber);
     }
 
     public class LookupItem

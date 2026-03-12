@@ -1,3 +1,4 @@
+@model LmsModernApp.Models.BorrowerFileListViewModel
 @{
     ViewData["Title"] = "File list";
 }
@@ -10,6 +11,167 @@
     <div class="col-md-10">
         <h2>File list</h2>
         <hr />
-        <p>Placeholder for File list content.</p>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                Borrower Lists (File Sets)
+            </div>
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Date Created</th>
+                            <th>Quantity</th>
+                            <th>Owner</th>
+                            <th>Access</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.FileSets)
+                        {
+                            <tr class="@(Model.SelectedFileSet.FileNumber == item.FileNumber ? "table-primary" : "")">
+                                <td>@item.FileDesc</td>
+                                <td>@(item.FileDate?.ToString("d") ?? "N/A")</td>
+                                <td>@item.FileQty</td>
+                                <td>@item.FileOper</td>
+                                <td>@(item.FileOperAccess == "A" ? "Global" : "Private")</td>
+                                <td>
+                                    <form asp-action="SelectFileSet" method="post">
+                                        <input type="hidden" name="fileNumber" value="@item.FileNumber" />
+                                        <input type="hidden" name="page" value="@Model.CurrentPage" />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Select</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination pagination-sm justify-content-center">
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" asp-action="FileList" asp-route-page="@i">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+
+        <!-- Maintenance Form (Bottom) -->
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                List Maintenance
+            </div>
+            <div class="card-body">
+                @if (Model.SelectedFileSet.FileNumber > 0)
+                {
+                    <form asp-action="UpdateFileSet" method="post">
+                        <input type="hidden" asp-for="SelectedFileSet.FileNumber" />
+                        <input type="hidden" asp-for="CurrentPage" />
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">File Name</label>
+                                <input asp-for="SelectedFileSet.FileDesc" class="form-control" readonly="@(!Model.CanEdit)" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Access Level</label>
+                                <select asp-for="SelectedFileSet.FileOperAccess" class="form-select" disabled="@(!Model.CanEdit)">
+                                    <option value="P">Private</option>
+                                    <option value="A">Global (Shared)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" checked="@(Model.SelectedFileSet.FileOperAccess == "A")" disabled>
+                                    <label class="form-check-label">Allow Others</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" disabled="@(!Model.CanEdit)">Save Changes</button>
+                            <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#emptyModal" disabled="@(!Model.CanDelete)">Empty List</button>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" disabled="@(!Model.CanDelete)">Delete List</button>
+                            <button type="button" class="btn btn-outline-info" onclick="alert('Email feature coming soon!')">Email List</button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted">
+                        <p>Select a list from the table above to view or modify details.</p>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
+
+    <!-- Modals -->
+    @if (Model.SelectedFileSet.FileNumber > 0)
+    {
+        <!-- Empty Modal -->
+        <div class="modal fade" id="emptyModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Empty List</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to remove all members from <strong>@Model.SelectedFileSet.FileDesc</strong>? This cannot be undone.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form asp-action="EmptyFileSet" method="post">
+                            <input type="hidden" name="fileNumber" value="@Model.SelectedFileSet.FileNumber" />
+                            <input type="hidden" name="page" value="@Model.CurrentPage" />
+                            <button type="submit" class="btn btn-warning">Empty Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-danger">Delete List</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to permanently delete the list <strong>@Model.SelectedFileSet.FileDesc</strong>?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form asp-action="DeleteFileSet" method="post">
+                            <input type="hidden" name="fileNumber" value="@Model.SelectedFileSet.FileNumber" />
+                            <input type="hidden" name="page" value="@Model.CurrentPage" />
+                            <button type="submit" class="btn btn-danger">Delete Forever</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
 </div>

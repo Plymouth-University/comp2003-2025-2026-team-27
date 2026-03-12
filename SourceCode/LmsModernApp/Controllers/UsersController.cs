@@ -117,9 +117,95 @@ namespace LmsModernApp.Controllers
             return View();
         }
 
-        public IActionResult FileList()
+        public async Task<IActionResult> FileList(int page = 1)
         {
-            return View();
+            var operatorName = User.Identity?.Name ?? "UNKNOWN";
+            var pageSize = 8;
+            
+            var totalItems = await _borrowerRepository.GetFileSetsCountByOperatorAsync(operatorName);
+            var fileSets = await _borrowerRepository.GetFileSetsByOperatorAsync(operatorName, page, pageSize);
+
+            var model = new BorrowerFileListViewModel
+            {
+                FileSets = fileSets,
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                OperatorName = operatorName
+            };
+
+            var selectedId = HttpContext.Session.GetInt32("SelectedFileNumber");
+            if (selectedId.HasValue)
+            {
+                var selectedSet = await _borrowerRepository.GetFileSetByNumberAsync(selectedId.Value);
+                if (selectedSet != null)
+                {
+                    model.SelectedFileSet = selectedSet;
+                    model.CanEdit = selectedSet.FileOper == operatorName || selectedSet.FileOperAccess == "A";
+                    model.CanDelete = selectedSet.FileOper == operatorName;
+                }
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult SelectFileSet(int fileNumber, int page = 1)
+        {
+            HttpContext.Session.SetInt32("SelectedFileNumber", fileNumber);
+            return RedirectToAction(nameof(FileList), new { page });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateFileSet(BorrowerFileListViewModel model)
+        {
+            var operatorName = User.Identity?.Name ?? "UNKNOWN";
+            var existing = await _borrowerRepository.GetFileSetByNumberAsync(model.SelectedFileSet.FileNumber ?? 0);
+            
+            if (existing != null && (existing.FileOper == operatorName || existing.FileOperAccess == "A"))
+            {
+                existing.FileDesc = model.SelectedFileSet.FileDesc;
+                existing.FileOperAccess = model.SelectedFileSet.FileOperAccess;
+                
+                var success = await _borrowerRepository.SaveFileSetNameAsync(existing);
+                if (success) TempData["SuccessMessage"] = "File set updated.";
+                else TempData["ErrorMessage"] = "Error updating file set.";
+            }
+            
+            return RedirectToAction(nameof(FileList), new { page = model.CurrentPage });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EmptyFileSet(int fileNumber, int page = 1)
+        {
+            var operatorName = User.Identity?.Name ?? "UNKNOWN";
+            var existing = await _borrowerRepository.GetFileSetByNumberAsync(fileNumber);
+            
+            if (existing != null && existing.FileOper == operatorName)
+            {
+                await _borrowerRepository.EmptyFileSetAsync(fileNumber);
+                TempData["SuccessMessage"] = "File set emptied.";
+            }
+            
+            return RedirectToAction(nameof(FileList), new { page });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteFileSet(int fileNumber, int page = 1)
+        {
+            var operatorName = User.Identity?.Name ?? "UNKNOWN";
+            var existing = await _borrowerRepository.GetFileSetByNumberAsync(fileNumber);
+            
+            if (existing != null && existing.FileOper == operatorName)
+            {
+                await _borrowerRepository.DeleteFileSetAsync(fileNumber);
+                HttpContext.Session.Remove("SelectedFileNumber");
+                TempData["SuccessMessage"] = "File set deleted.";
+            }
+            
+            return RedirectToAction(nameof(FileList), new { page });
         }
 
         public IActionResult ReadingList()

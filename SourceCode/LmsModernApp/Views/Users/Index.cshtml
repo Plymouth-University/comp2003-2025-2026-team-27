@@ -3,14 +3,26 @@
     ViewData["Title"] = "Users";
 }
 
+<style>
+    .lms-label { font-size: 0.85rem; font-weight: 600; color: #444; margin-bottom: 2px; }
+    .form-control-sm, .form-select-sm, .form-control, .form-select { border-radius: 2px; border: 1px solid #bbb !important; }
+    .input-group-text { border: 1px solid #bbb !important; background-color: #f8f9fa; }
+    .toolbar-btn { min-width: 80px; font-size: 0.85rem; }
+    .meta-label { display: inline-block; width: 100px; font-size: 0.8rem; color: #666; font-weight: 600; }
+    .meta-val { font-size: 0.85rem; font-weight: 700; color: #333; }
+    .meta-row { border-bottom: 1px solid #eee; padding: 6px 0; align-items: center; }
+</style>
+
 <partial name="_DashboardHeader" />
 
-<div class="row mt-4">
+<div class="row mt-3">
     <partial name="_UsersSidebar" />
 
     <div class="col-md-10">
-        <h2>Users</h2>
-        <hr />
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="text-primary mb-0">Borrower Module</h4>
+            <div class="text-muted small">ID: @(Model.Borrower.BorNo > 0 ? Model.Borrower.BorNo.ToString() : "NEW")</div>
+        </div>
 
         @if (TempData["SuccessMessage"] != null)
         {
@@ -28,134 +40,296 @@
             </div>
         }
 
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <span>Borrower Maintenance</span>
-                <form asp-action="Search" method="post" class="d-flex gap-2">
-                    <input type="text" name="barcode" class="form-control form-control-sm" placeholder="Scan Barcode..." autofocus />
-                    <button type="submit" class="btn btn-light btn-sm">Find</button>
-                </form>
-            </div>
-            <div class="card-body">
-                <form asp-action="Save" method="post">
-                    <input type="hidden" asp-for="Borrower.BorNo" />
-                    
-                    <div class="row g-3">
-                        <div class="col-md-2">
-                            <label asp-for="Borrower.BorBarNo" class="form-label">Barcode</label>
-                            <input asp-for="Borrower.BorBarNo" class="form-control" />
-                        </div>
-                        <div class="col-md-2">
-                            <label asp-for="Borrower.BorTitle" class="form-label">Title</label>
-                            <select asp-for="Borrower.BorTitle" class="form-select">
-                                <option value="">-- Select --</option>
-                                @foreach (var item in Model.Titles)
-                                {
-                                    <option value="@item.Code">@item.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label asp-for="Borrower.BorSurname" class="form-label">Surname</label>
-                            <input asp-for="Borrower.BorSurname" class="form-control" required />
-                        </div>
-                        <div class="col-md-4">
-                            <label asp-for="Borrower.BorGiven" class="form-label">Given Name</label>
-                            <input asp-for="Borrower.BorGiven" class="form-control" required />
-                        </div>
+        <!-- Professional Toolbar -->
+        <div class="d-flex flex-wrap mb-3 border p-1 bg-light rounded shadow-sm align-items-center" role="toolbar">
+            <button type="button" class="btn btn-outline-secondary toolbar-btn me-1" onclick="location.href='@Url.Action("New")'"><i class="bi bi-eraser"></i> Clear</button>
+            <button type="button" class="btn btn-outline-secondary toolbar-btn me-1" onclick="location.href='@Url.Action("New")'"><i class="bi bi-file-earmark-plus"></i> New</button>
+            <button type="button" class="btn btn-primary toolbar-btn me-1" onclick="document.getElementById('mainForm').submit()"><i class="bi bi-save"></i> Save</button>
+            <button type="button" class="btn btn-outline-danger toolbar-btn me-3" data-bs-toggle="modal" data-bs-target="#deleteModal" @(Model.Borrower.BorNo == 0 ? "disabled" : "")><i class="bi bi-trash"></i> Delete</button>
 
-                        <div class="col-md-3">
-                            <label asp-for="Borrower.BorType" class="form-label">Type</label>
-                            <select asp-for="Borrower.BorType" class="form-select">
-                                @foreach (var item in Model.BorrowerTypes)
-                                {
-                                    <option value="@item.Code">@item.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="Borrower.BorGroup" class="form-label">Group</label>
-                            <select asp-for="Borrower.BorGroup" class="form-select">
-                                @foreach (var item in Model.BorrowerGroups)
-                                {
-                                    <option value="@item.Code">@item.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="Borrower.BorClass" class="form-label">Class</label>
-                            <select asp-for="Borrower.BorClass" class="form-select">
-                                @foreach (var item in Model.BorrowerClasses)
-                                {
-                                    <option value="@item.Code">@item.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="Borrower.BorStatus" class="form-label">Status</label>
-                            <select asp-for="Borrower.BorStatus" class="form-select">
-                                @foreach (var item in Model.BorrowerStatuses)
-                                {
-                                    <option value="@item.Code">@item.Name</option>
-                                }
-                            </select>
-                        </div>
+            <button type="button" class="btn btn-outline-info toolbar-btn me-1"><i class="bi bi-search"></i> Query</button>
+            <button type="button" class="btn btn-outline-secondary toolbar-btn me-3"><i class="bi bi-table"></i> Table View</button>
 
-                        <div class="col-md-6">
-                            <label asp-for="Borrower.BorEmail" class="form-label">Email</label>
-                            <input asp-for="Borrower.BorEmail" type="email" class="form-control" />
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="Borrower.BorLocation" class="form-label">Location</label>
-                            <select asp-for="Borrower.BorLocation" class="form-select">
-                                @foreach (var item in Model.Locations)
-                                {
-                                    <option value="@item.Code">@item.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="Borrower.BorPin" class="form-label">PIN</label>
-                            <input asp-for="Borrower.BorPin" class="form-control" type="password" />
-                        </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="First"><i class="bi bi-chevron-bar-left"></i> First</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="Previous"><i class="bi bi-chevron-left"></i> Prev</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="Next"><i class="bi bi-chevron-right"></i> Next</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-3" title="Last"><i class="bi bi-chevron-bar-right"></i> Last</button>
 
-                        <div class="col-12 mt-4">
-                            <button type="submit" class="btn btn-primary">Save Borrower</button>
-                            <a asp-action="New" class="btn btn-outline-secondary">New Record</a>
-                            @if (Model.Borrower.BorNo > 0)
-                            {
-                                <button type="button" class="btn btn-outline-danger float-end" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
-                            }
+            <div class="btn-group" role="group">
+                <button id="btnMore" type="button" class="btn btn-outline-secondary dropdown-toggle toolbar-btn" data-bs-toggle="dropdown" aria-expanded="false">More</button>
+                <div class="dropdown-menu p-3 shadow" aria-labelledby="btnMore" style="min-width: 350px;">
+                    <div class="row">
+                        <div class="col-6 border-end">
+                            <h6 class="dropdown-header px-0">Management</h6>
+                            <button class="dropdown-item rounded mb-1" type="button"><i class="bi bi-image me-2"></i>Picture</button>
+                            <button class="dropdown-item rounded mb-1" type="button"><i class="bi bi-qr-code me-2"></i>QR Code</button>
+                            <button class="dropdown-item rounded mb-1" type="button"><i class="bi bi-calendar-check me-2"></i>ReRegister Expiry</button>
+                            <button class="dropdown-item rounded mb-1" type="button"><i class="bi bi-clock-history me-2"></i>History</button>
+                            <button class="dropdown-item rounded mb-1" type="button"><i class="bi bi-journal-text me-2"></i>Memo</button>
+                            <button class="dropdown-item rounded mb-1" type="button"><i class="bi bi-geo-alt me-2"></i>Addresses</button>
+                            <button class="dropdown-item rounded mb-1" type="button"><i class="bi bi-envelope me-2"></i>Send Email</button>
                         </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        @if (Model.Borrower.BorNo > 0)
-        {
-            <!-- Delete Confirmation Modal -->
-            <div class="modal fade" id="deleteModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Confirm Delete</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            Are you sure you want to delete @Model.Borrower.BorGiven @Model.Borrower.BorSurname?
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <form asp-action="Delete" method="post">
-                                <input type="hidden" name="id" value="@Model.Borrower.BorNo" />
-                                <button type="submit" class="btn btn-danger">Delete</button>
-                            </form>
+                        <div class="col-6 ps-3">
+                            <h6 class="dropdown-header px-0">Operations</h6>
+                            <button class="dropdown-item rounded mb-1" type="button"><i class="bi bi-arrow-repeat me-2"></i>Circulation</button>
+                            <button class="dropdown-item rounded mb-1 text-success" type="button"><i class="bi bi-check-circle me-2"></i>Approve</button>
+                            <button class="dropdown-item rounded mb-1 text-danger" type="button"><i class="bi bi-x-circle me-2"></i>Reject</button>
+                            <button class="dropdown-item rounded mb-1 text-primary" type="button"><i class="bi bi-shield-lock me-2"></i>Reset User Pin</button>
                         </div>
                     </div>
                 </div>
             </div>
-        }
+        </div>
 
+        <form asp-action="Save" method="post" id="mainForm">
+            <input type="hidden" asp-for="Borrower.BorNo" />
+
+            <!-- Classification Row (Above columns) -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-5">
+                    <label class="lms-label">Group</label>
+                    <select asp-for="Borrower.BorGroup" class="form-select form-select-sm">
+                        <option value="">-- Select --</option>
+                        @foreach (var item in Model.BorrowerGroups) { <option value="@item.Code">@item.Name</option> }
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="lms-label">Class</label>
+                    <select asp-for="Borrower.BorClass" class="form-select form-select-sm">
+                        <option value="">-- Select --</option>
+                        @foreach (var item in Model.BorrowerClasses) { <option value="@item.Code">@item.Name</option> }
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Column 1 -->
+                <div class="col-md-5 border-end">
+                    <div class="mb-2">
+                        <label class="lms-label">Barcode</label>
+                        <input asp-for="Borrower.BorBarNo" class="form-control form-control-sm" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Surname</label>
+                        <input asp-for="Borrower.BorSurname" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Given Name</label>
+                        <input asp-for="Borrower.BorGiven" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Middle Name</label>
+                        <input asp-for="Borrower.BorInit" class="form-control form-control-sm" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Title</label>
+                        <select asp-for="Borrower.BorTitle" class="form-select form-select-sm">
+                            <option value="">-- Select --</option>
+                            @foreach (var item in Model.Titles) { <option value="@item.Code">@item.Name</option> }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Gender</label>
+                        <select asp-for="Borrower.BorSex" class="form-select form-select-sm">
+                            <option value="">-- Select --</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                            <option value="O">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Birthdate</label>
+                        <div class="input-group input-group-sm">
+                            <select class="form-select" style="max-width: 130px;">
+                                <option value="before">Before</option>
+                                <option value="equal" selected>Equal to</option>
+                                <option value="after">After</option>
+                            </select>
+                            <input asp-for="Borrower.BorDob" type="date" class="form-control" />
+                            <span class="input-group-text" style="width: 80px;">Age: 0</span>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Phone</label>
+                        <input asp-for="Borrower.ContactTel" class="form-control form-control-sm" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Comment</label>
+                        <input asp-for="Borrower.Salutation" class="form-control form-control-sm" />
+                    </div>
+                </div>
+
+                <!-- Column 2 -->
+                <div class="col-md-5 border-end">
+                    <div class="mb-2">
+                        <label class="lms-label">Pin</label>
+                        <div class="input-group input-group-sm">
+                            <input asp-for="Borrower.BorPin" type="password" class="form-control form-control-sm" id="pinField" readonly />
+                            <button class="btn btn-outline-secondary" type="button" onclick="const p = document.getElementById('pinField'); p.readOnly = !p.readOnly; p.type = p.type === 'password' ? 'text' : 'password';">Show Pin</button>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Type</label>
+                        <select asp-for="Borrower.BorType" class="form-select form-select-sm">
+                            <option value="">-- Select --</option>
+                            @foreach (var item in Model.BorrowerTypes) { <option value="@item.Code">@item.Name</option> }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Location</label>
+                        <select asp-for="Borrower.BorLocation" class="form-select form-select-sm">
+                            <option value="">-- Select --</option>
+                            @foreach (var item in Model.Locations) { <option value="@item.Code">@item.Name</option> }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Status</label>
+                        <select asp-for="Borrower.BorStatus" class="form-select form-select-sm">
+                            <option value="">-- Select --</option>
+                            @foreach (var item in Model.BorrowerStatuses) { <option value="@item.Code">@item.Name</option> }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Mobile/Cell</label>
+                        <div class="input-group input-group-sm">
+                            <input asp-for="Borrower.BorMobileTel" class="form-control" />
+                            <span class="input-group-text">Use for notices</span>
+                            <select name="Borrower.BorMobUsfn" class="form-select" style="max-width: 80px;">
+                                <option value="Y" selected='@(Model.Borrower.BorMobUsfn == "Y")'>Y</option>
+                                <option value="N" selected='@(Model.Borrower.BorMobUsfn != "Y")'>N</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Phone</label>
+                        <div class="input-group input-group-sm">
+                            <input asp-for="Borrower.BorPhoneTel" class="form-control" />
+                            <span class="input-group-text">Use for notices</span>
+                            <select name="Borrower.BorPhoUsfn" class="form-select" style="max-width: 80px;">
+                                <option value="Y" selected='@(Model.Borrower.BorPhoUsfn == "Y")'>Y</option>
+                                <option value="N" selected='@(Model.Borrower.BorPhoUsfn != "Y")'>N</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Email</label>
+                        <div class="input-group input-group-sm">
+                            <input asp-for="Borrower.BorEmail" type="email" class="form-control" />
+                            <span class="input-group-text">Use for notices</span>
+                            <select name="Borrower.BorUseEmail" class="form-select" style="max-width: 80px;">
+                                <option value="Y" selected='@(Model.Borrower.BorNo == 0 || Model.Borrower.BorUseEmail == "Y")'>Y</option>
+                                <option value="N" selected='@(Model.Borrower.BorNo > 0 && Model.Borrower.BorUseEmail == "N")'>N</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="lms-label">Email 2</label>
+                        <div class="input-group input-group-sm">
+                            <input asp-for="Borrower.BorEmail2" type="email" class="form-control" />
+                            <span class="input-group-text">Use for notices</span>
+                            <select name="Borrower.BorUseEmail2" class="form-select" style="max-width: 80px;">
+                                <option value="Y" selected='@(Model.Borrower.BorUseEmail2 == "Y")'>Y</option>
+                                <option value="N" selected='@(Model.Borrower.BorUseEmail2 != "Y")'>N</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-outline-primary btn-sm"><i class="bi bi-envelope-at me-1"></i> Correspondence</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm"><i class="bi bi-house me-1"></i> Residential</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-badge me-1"></i> Guardian</button>
+                    </div>
+                </div>
+
+                <!-- Column 3 (Profile Photo) -->
+                <div class="col-md-2 text-center">
+                    <!-- Spacer to align with the Pin field label -->
+                    <div style="height: 23px;"></div> 
+                    <div class="text-center p-2 border rounded bg-light shadow-sm">
+                        <div class="profile-pic-placeholder" style="width: 100%; height: 130px; margin: 0 auto; border: 1px solid #bbb !important;">
+                            <i class="bi bi-person text-muted" style="font-size: 3.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <!-- Metadata Rows -->
+            <div class="row meta-row px-2">
+                <div class="col-md-4">
+                    <span class="meta-label">Balance:</span>
+                    <span class="meta-val ms-2">@(Model.Borrower.BorOwing?.ToString("C") ?? "£0.00")</span>
+                </div>
+                <div class="col-md-4">
+                    <span class="meta-label">Memo Count:</span>
+                    <span class="meta-val ms-2">0</span>
+                </div>
+                <div class="col-md-4 d-flex align-items-center">
+                    <span class="meta-label">Loan Count:</span>
+                    <span class="meta-val ms-2">@(Model.Borrower.BorNoLoans ?? 0)</span>
+                    <span class="meta-label ms-auto" style="width: auto;">Security:</span>
+                    <input asp-for="Borrower.BorSecurity" class="form-control form-control-sm ms-2" style="max-width: 60px;" value="@(Model.Borrower.BorSecurity ?? 0)" />
+                </div>
+            </div>
+
+            <div class="row meta-row px-2">
+                <div class="col-md-4">
+                    <span class="meta-label">Joined:</span>
+                    <span class="meta-val ms-2">@(Model.Borrower.BorRegdate?.ToString("dd/MM/yyyy") ?? "--/--/----")</span>
+                </div>
+                <div class="col-md-4">
+                    <span class="meta-label">At:</span>
+                    <span class="meta-val ms-2">@Model.Borrower.BorStartLocation</span>
+                </div>
+                <div class="col-md-4">
+                    <span class="meta-label">Modified:</span>
+                    <span class="meta-val ms-2">@(Model.Borrower.BorDatetime?.ToString("dd/MM/yyyy") ?? "--/--/----")</span>
+                </div>
+            </div>
+
+            <div class="row meta-row px-2">
+                <div class="col-md-4">
+                    <span class="meta-label">Reg Exp:</span>
+                    <span class="meta-val ms-2">@(Model.Borrower.BorStartMship?.AddYears(1).ToString("dd/MM/yyyy") ?? "--/--/----")</span>
+                </div>
+                <div class="col-md-4">
+                    <span class="meta-label">Last active:</span>
+                    <span class="meta-val ms-2">@(Model.Borrower.BorLastactive?.ToString("dd/MM/yyyy") ?? "--/--/----")</span>
+                </div>
+                <div class="col-md-4">
+                    <span class="meta-label">By:</span>
+                    <span class="meta-val ms-2">@Model.Borrower.BorOper</span>
+                </div>
+            </div>
+
+            <div class="row meta-row px-2 border-bottom-0">
+                <div class="col-md-4">
+                    <span class="meta-label">Lib. Group:</span>
+                    <span class="meta-val ms-2">@Model.Borrower.BorLibGroup</span>
+                </div>
+                <div class="col-md-4 d-flex align-items-center">
+                    <span class="meta-label">Approved:</span>
+                    <input type="checkbox" class="form-check-input ms-2" style="border: 1px solid #bbb !important;" @(Model.Borrower.BorApproved == "Y" ? "checked" : "") disabled />
+                </div>
+                <div class="col-md-4"></div>
+            </div>
+        </form>
     </div>
 </div>
+
+@if (Model.Borrower.BorNo > 0)
+{
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Confirm Delete</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">Are you sure you want to delete <strong>@Model.Borrower.BorGiven @Model.Borrower.BorSurname</strong>?</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-action="Delete" method="post"><input type="hidden" name="id" value="@Model.Borrower.BorNo" /><button type="submit" class="btn btn-danger">Delete</button></form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
