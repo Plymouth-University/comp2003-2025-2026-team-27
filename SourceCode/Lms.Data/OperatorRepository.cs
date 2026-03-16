@@ -37,34 +37,42 @@ namespace Lms.Data
             }
 
             // Scenario B: Restricted Access (based on Library Groups)
-            // 1. Get Primary Group from Operator's Default LocatiYeson
+            var allowedGroupIds = await GetAllowedGroupsAsync(op);
+
+            // Return locations belonging to those groups
+            return await baseQuery
+                .Where(l => allowedGroupIds.Contains(l.LlGroup))
+                .OrderBy(l => l.LlName)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllowedGroupsAsync(Operator op)
+        {
+            if (op.AccessAllGroups == "Y")
+            {
+                // Return all distinct groups
+                return await _context.LibGroups
+                    .Select(g => g.LgGroup)
+                    .Distinct()
+                    .ToListAsync();
+            }
+
             var primaryLocation = await _context.LibLocations
                 .FirstOrDefaultAsync(l => l.LlCode == op.OperLlCode);
 
-            if (primaryLocation == null)
-            {
-                // Fallback: if no default location, no access to anything
-                return new List<LibLocation>();
-            }
+            if (primaryLocation == null) return new List<string>();
 
             var primaryGroup = primaryLocation.LlGroup;
-
-            // 2. Find Related Groups (from LIB_GROUP_PERMITS)
-            // Legacy logic: LgpGivefromGroup -> LgpGivetoGroup
             var permittedGroups = await _context.LibGroupPermits
                 .Where(p => p.LgpGivefromGroup == primaryGroup)
                 .Select(p => p.LgpGivetoGroup)
                 .ToListAsync();
 
-            // 3. Combine Primary Group and Related Groups
-            var allowedGroupIds = new List<string?> { primaryGroup };
-            allowedGroupIds.AddRange(permittedGroups);
+            var allowedGroups = new List<string>();
+            if (!string.IsNullOrEmpty(primaryGroup)) allowedGroups.Add(primaryGroup);
+            allowedGroups.AddRange(permittedGroups.Where(g => !string.IsNullOrEmpty(g)).Cast<string>());
 
-            // 4. Return locations belonging to those groups
-            return await baseQuery
-                .Where(l => allowedGroupIds.Contains(l.LlGroup))
-                .OrderBy(l => l.LlName)
-                .ToListAsync();
+            return allowedGroups.Distinct().ToList();
         }
     }
 }

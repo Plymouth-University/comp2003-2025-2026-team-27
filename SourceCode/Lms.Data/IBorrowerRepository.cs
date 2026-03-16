@@ -26,6 +26,27 @@ namespace Lms.Data
         Task<bool> SaveFileSetNameAsync(FileSetName fileSet);
         Task<bool> DeleteFileSetAsync(int fileNumber);
         Task<bool> EmptyFileSetAsync(int fileNumber);
+
+        // Search
+        Task<PagedResult<BorrowerWithAddress>> SearchBorrowersAsync(
+            string? barcode, 
+            string? surname, 
+            string? givenName,
+            string? type,
+            string? group,
+            string? className,
+            string? status,
+            string? location,
+            string? sex,
+            DateTime? dob,
+            string? dobCondition,
+            List<string> allowedGroups,
+            int page,
+            int pageSize,
+            string sortField,
+            string sortOrder);
+
+        Task<BorAddr?> GetMainAddressAsync(int borNo);
     }
 
     public class LookupItem

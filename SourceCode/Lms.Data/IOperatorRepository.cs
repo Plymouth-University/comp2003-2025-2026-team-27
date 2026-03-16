@@ -7,5 +7,6 @@ namespace Lms.Data
         Task<Operator?> ValidateOperatorAsync(string username, string password);
         Task<Operator?> GetOperatorByNameAsync(string username);
         Task<List<LibLocation>> GetAllowedLocationsAsync(Operator op);
+        Task<List<string>> GetAllowedGroupsAsync(Operator op);
     }
 }

@@ -12,10 +12,12 @@ namespace LmsModernApp.Controllers
     public class UsersController : Controller
     {
         private readonly IBorrowerRepository _borrowerRepository;
+        private readonly IOperatorRepository _operatorRepository;
 
-        public UsersController(IBorrowerRepository borrowerRepository)
+        public UsersController(IBorrowerRepository borrowerRepository, IOperatorRepository operatorRepository)
         {
             _borrowerRepository = borrowerRepository;
+            _operatorRepository = operatorRepository;
         }
 
         public async Task<IActionResult> Index()
@@ -34,6 +36,77 @@ namespace LmsModernApp.Controllers
             }
 
             return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Query(BorrowerMaintenanceViewModel model)
+        {
+            var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
+            if (op == null) return Unauthorized();
+
+            var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
+            
+            // Extract search criteria from the model (which uses the Borrower object as a container)
+            var criteria = new BorrowerSearchCriteria
+            {
+                BorBarNo = model.Borrower.BorBarNo,
+                BorSurname = model.Borrower.BorSurname,
+                BorGiven = model.Borrower.BorGiven,
+                BorType = model.Borrower.BorType,
+                BorGroup = model.Borrower.BorGroup,
+                BorClass = model.Borrower.BorClass,
+                BorStatus = model.Borrower.BorStatus,
+                BorLocation = model.Borrower.BorLocation,
+                BorSex = model.Borrower.BorSex,
+                BorDob = model.Borrower.BorDob.HasValue ? model.Borrower.BorDob.Value.ToDateTime(TimeOnly.MinValue) : null,
+                // Condition would need to come from a separate field in a real search model
+                BorDobCondition = Request.Form["BorDobCondition"].ToString() ?? "equal"
+            };
+
+            Lms.Data.PagedResult<Lms.Data.BorrowerWithAddress> results = await _borrowerRepository.SearchBorrowersAsync(
+                criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
+                criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
+                criteria.BorDobCondition, allowedGroups, 1, 100, "BorSurname", "ASC");
+
+            if (results.TotalItems == 0)
+            {
+                TempData["ErrorMessage"] = "No borrowers found matching your criteria.";
+                return RedirectToAction(nameof(Index));
+            }
+            
+            if (results.TotalItems == 1)
+            {
+                HttpContext.Session.SetInt32("SelectedBorrowerId", results.Items[0].Borrower.BorNo);
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Store criteria in session for the table view
+            TempData["SearchCriteria"] = System.Text.Json.JsonSerializer.Serialize(criteria);
+            
+            return RedirectToAction(nameof(BorrowerResultTable));
+        }
+
+        public async Task<IActionResult> BorrowerResultTable(int page = 1, string sort = "BorSurname", string order = "ASC")
+        {
+            var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
+            if (op == null) return Unauthorized();
+
+            var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
+
+            // Retrieve full criteria from TempData
+            var criteriaJson = TempData.Peek("SearchCriteria")?.ToString();
+            var criteria = !string.IsNullOrEmpty(criteriaJson) 
+                ? System.Text.Json.JsonSerializer.Deserialize<BorrowerSearchCriteria>(criteriaJson)
+                : new BorrowerSearchCriteria();
+
+            if (criteria == null) criteria = new BorrowerSearchCriteria();
+
+            Lms.Data.PagedResult<Lms.Data.BorrowerWithAddress> results = await _borrowerRepository.SearchBorrowersAsync(
+                criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
+                criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
+                criteria.BorDobCondition, allowedGroups, page, 20, sort, order);
+
+            return View(results);
         }
 
         [HttpPost]

@@ -189,5 +189,122 @@ namespace Lms.Data
             
             return true;
         }
+
+        public async Task<BorAddr?> GetMainAddressAsync(int borNo)
+        {
+            return await _delib.BorAddrs.FirstOrDefaultAsync(a => a.BaBorNo == borNo && a.BaMain == true);
+        }
+
+        // --- Search ---
+
+        public async Task<PagedResult<BorrowerWithAddress>> SearchBorrowersAsync(
+            string? barcode,
+            string? surname,
+            string? givenName,
+            string? type,
+            string? group,
+            string? className,
+            string? status,
+            string? location,
+            string? sex,
+            DateTime? dob,
+            string? dobCondition,
+            List<string> allowedGroups,
+            int page,
+            int pageSize,
+            string sortField,
+            string sortOrder)
+        {
+            var query = _delib.Borrowers.AsQueryable();
+
+            // 1. Security Filter: BOR_LIB_GROUP must be in allowedGroups
+            if (allowedGroups != null && allowedGroups.Any())
+            {
+                query = query.Where(b => b.BorLibGroup != null && allowedGroups.Contains(b.BorLibGroup));
+            }
+
+            // 2. Dynamic Filtering
+            if (!string.IsNullOrWhiteSpace(barcode))
+                query = query.Where(b => b.BorBarNo == barcode.Trim());
+
+            if (!string.IsNullOrWhiteSpace(surname))
+                query = query.Where(b => b.BorSurname != null && b.BorSurname.StartsWith(surname.Trim()));
+
+            if (!string.IsNullOrWhiteSpace(givenName))
+                query = query.Where(b => b.BorGiven != null && b.BorGiven.StartsWith(givenName.Trim()));
+
+            if (!string.IsNullOrWhiteSpace(type))
+                query = query.Where(b => b.BorType == type);
+
+            if (!string.IsNullOrWhiteSpace(group))
+                query = query.Where(b => b.BorGroup == group);
+
+            if (!string.IsNullOrWhiteSpace(className))
+                query = query.Where(b => b.BorClass == className);
+
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(b => b.BorStatus == status);
+
+            if (!string.IsNullOrWhiteSpace(location))
+                query = query.Where(b => b.BorLocation == location);
+
+            if (!string.IsNullOrWhiteSpace(sex))
+                query = query.Where(b => b.BorSex == sex);
+
+            if (dob.HasValue)
+            {
+                var dobDate = DateOnly.FromDateTime(dob.Value);
+                query = dobCondition switch
+                {
+                    "before" => query.Where(b => b.BorDob < dobDate),
+                    "after" => query.Where(b => b.BorDob > dobDate),
+                    _ => query.Where(b => b.BorDob == dobDate)
+                };
+            }
+
+            // 3. Counting Total Results
+            var totalItems = await query.CountAsync();
+
+            // 4. Dynamic Sorting
+            bool isDesc = sortOrder?.ToUpper() == "DESC";
+            query = sortField switch
+            {
+                "BorBarNo" => isDesc ? query.OrderByDescending(b => b.BorBarNo) : query.OrderBy(b => b.BorBarNo),
+                "BorGiven" => isDesc ? query.OrderByDescending(b => b.BorGiven) : query.OrderBy(b => b.BorGiven),
+                "BorType" => isDesc ? query.OrderByDescending(b => b.BorType) : query.OrderBy(b => b.BorType),
+                "BorGroup" => isDesc ? query.OrderByDescending(b => b.BorGroup) : query.OrderBy(b => b.BorGroup),
+                "BorClass" => isDesc ? query.OrderByDescending(b => b.BorClass) : query.OrderBy(b => b.BorClass),
+                "BorNoLoans" => isDesc ? query.OrderByDescending(b => b.BorNoLoans) : query.OrderBy(b => b.BorNoLoans),
+                _ => isDesc ? query.OrderByDescending(b => b.BorSurname) : query.OrderBy(b => b.BorSurname)
+            };
+
+            // 5. Join with Address and Paginate
+            var results = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .GroupJoin(
+                    _delib.BorAddrs.Where(a => a.BaMain == true),
+                    b => b.BorNo,
+                    a => a.BaBorNo,
+                    (b, addresses) => new { Borrower = b, MainAddress = addresses.FirstOrDefault() }
+                )
+                .ToListAsync();
+
+            var finalItems = results.Select(r => new BorrowerWithAddress
+            {
+                Borrower = r.Borrower,
+                FormattedAddress = r.MainAddress != null
+                    ? string.Join(", ", new[] { r.MainAddress.BaAddr1, r.MainAddress.BaAddr2, r.MainAddress.BaAddr3, r.MainAddress.BaAddr4, r.MainAddress.BaAddr5 }.Where(s => !string.IsNullOrWhiteSpace(s)))
+                    : r.Borrower.BorAddr1Txt
+            }).ToList();
+
+            return new PagedResult<BorrowerWithAddress>
+            {
+                Items = finalItems,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
     }
 }

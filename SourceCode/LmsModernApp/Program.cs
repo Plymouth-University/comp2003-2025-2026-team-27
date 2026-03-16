@@ -18,27 +18,27 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 var delibConnectionString = builder.Configuration.GetConnectionString("DelibConnection") ?? throw new InvalidOperationException("Connection string 'DelibConnection' not found.");
 builder.Services.AddDbContext<DelibContext>(options =>
-    options.UseSqlServer(delibConnectionString));
+    options.UseSqlServer(delibConnectionString, sqlOptions => sqlOptions.UseCompatibilityLevel(120)));
 
 var catConnectionString = builder.Configuration.GetConnectionString("CatConnection") ?? throw new InvalidOperationException("Connection string 'CatConnection' not found.");
 builder.Services.AddDbContext<DecatContext>(options =>
-    options.UseSqlServer(catConnectionString));
+    options.UseSqlServer(catConnectionString, sqlOptions => sqlOptions.UseCompatibilityLevel(120)));
 
 var localConnectionString = builder.Configuration.GetConnectionString("LocalConnection") ?? throw new InvalidOperationException("Connection string 'LocalConnection' not found.");
 builder.Services.AddDbContext<DelocalContext>(options =>
-    options.UseSqlServer(localConnectionString));
+    options.UseSqlServer(localConnectionString, sqlOptions => sqlOptions.UseCompatibilityLevel(120)));
 
 var webConnectionString = builder.Configuration.GetConnectionString("WebConnection") ?? throw new InvalidOperationException("Connection string 'WebConnection' not found.");
 builder.Services.AddDbContext<DewebContext>(options =>
-    options.UseSqlServer(webConnectionString));
+    options.UseSqlServer(webConnectionString, sqlOptions => sqlOptions.UseCompatibilityLevel(120)));
 
 var statsConnectionString = builder.Configuration.GetConnectionString("StatsConnection") ?? throw new InvalidOperationException("Connection string 'StatsConnection' not found.");
 builder.Services.AddDbContext<DestatsContext>(options =>
-    options.UseSqlServer(statsConnectionString));
+    options.UseSqlServer(statsConnectionString, sqlOptions => sqlOptions.UseCompatibilityLevel(120)));
 
 var reportConnectionString = builder.Configuration.GetConnectionString("ReportConnection") ?? throw new InvalidOperationException("Connection string 'ReportConnection' not found.");
 builder.Services.AddDbContext<DereportContext>(options =>
-    options.UseSqlServer(reportConnectionString));
+    options.UseSqlServer(reportConnectionString, sqlOptions => sqlOptions.UseCompatibilityLevel(120)));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
