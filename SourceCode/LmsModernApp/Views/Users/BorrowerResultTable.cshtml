@@ -153,8 +153,7 @@
         }
 
         function selectBorrower(id) {
-            // Future: Could use AJAX to set selected borrower and navigate back to Index
-            window.location.href = '@Url.Action("Index")' + '?selectedId=' + id;
+            window.location.href = '@Url.Action("Index")' + '?id=' + id;
         }
 
         // Placeholders for batch actions

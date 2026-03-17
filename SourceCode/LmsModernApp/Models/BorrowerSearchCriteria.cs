@@ -16,6 +16,8 @@ namespace LmsModernApp.Models
         public DateTime? BorDob { get; set; }
         public string? BorDobCondition { get; set; } // "equal", "before", "after"
         
+        public int? FileNumber { get; set; }
+        
         // Paging and Sorting
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
