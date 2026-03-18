@@ -67,7 +67,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IOperatorRepository, OperatorRepository>();
 builder.Services.AddScoped<IBorrowerRepository, BorrowerRepository>();
-
+builder.Services.AddScoped<ICatalogueRepository, CatalogueRepository>();
 
 var app = builder.Build();
 

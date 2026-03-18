@@ -10,19 +10,19 @@
     @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
     :root {
-        --primary: #1f66d1;
+        --primary:       #1f66d1;
         --primary-light: #2b78ff;
-        --accent: #d11b2d;
-        --surface: #f8f9fc;
-        --sidebar-bg: #f1f4fb;
-        --border: #dde3f0;
-        --text-main: #1e2a45;
-        --text-muted: #6b7a99;
-        --table-header: #1f66d1;
-        --action-hover: #e8edf8;
-        --radius: 6px;
-        --shadow-sm: 0 1px 3px rgba(26,79,186,.10);
-        --shadow-md: 0 4px 16px rgba(26,79,186,.12);
+        --accent:        #d11b2d;
+        --surface:       #f8f9fc;
+        --sidebar-bg:    #f1f4fb;
+        --border:        #dde3f0;
+        --text-main:     #1e2a45;
+        --text-muted:    #6b7a99;
+        --table-header:  #1f66d1;
+        --action-hover:  #e8edf8;
+        --radius:        6px;
+        --shadow-sm:     0 1px 3px rgba(26,79,186,.10);
+        --shadow-md:     0 4px 16px rgba(26,79,186,.12);
     }
 
     .catalogue-wrap, .catalogue-wrap * {
@@ -34,7 +34,7 @@
         display: flex;
         min-height: calc(100vh - 120px);
         background: var(--surface);
-        margin: 0 -12px; /* counteract _Layout container padding */
+        margin: 0 -12px;
     }
 
     /* ── Sidebar ── */
@@ -68,15 +68,14 @@
         transition: background .15s, border-color .15s, color .15s;
     }
 
-        .cat-sidebar a:hover {
-            background: var(--action-hover);
-            border-left-color: var(--primary-light);
-            color: var(--primary);
-        }
+    .cat-sidebar a:hover {
+        background: var(--action-hover);
+        border-left-color: var(--primary-light);
+        color: var(--primary);
+    }
 
     .cat-sidebar .dot {
-        width: 5px;
-        height: 5px;
+        width: 5px; height: 5px;
         border-radius: 50%;
         background: var(--border);
         flex-shrink: 0;
@@ -139,22 +138,9 @@
         transition: background .13s, color .13s, border-color .13s;
     }
 
-        .tb-btn:hover {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-        }
-
-        .tb-btn.tb-danger {
-            color: var(--accent);
-            border-color: #f5c6cb;
-        }
-
-            .tb-btn.tb-danger:hover {
-                background: var(--accent);
-                color: #fff;
-                border-color: var(--accent);
-            }
+    .tb-btn:hover           { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .tb-btn.tb-danger       { color: var(--accent); border-color: #f5c6cb; }
+    .tb-btn.tb-danger:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
     /* ── Search panel ── */
     .search-panel {
@@ -173,79 +159,72 @@
         margin-bottom: 10px;
     }
 
-    .search-field {
-        display: flex;
-        align-items: center;
-        gap: 7px;
+    .search-field        { display: flex; align-items: center; gap: 7px; }
+    .search-field label  { font-size: 12px; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+
+    .search-field input,
+    .search-field select {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        padding: 5px 9px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--surface);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color .15s, box-shadow .15s;
     }
 
-        .search-field label {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-
-        .search-field input,
-        .search-field select {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 13px;
-            padding: 5px 9px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            background: var(--surface);
-            color: var(--text-main);
-            outline: none;
-            transition: border-color .15s, box-shadow .15s;
-        }
-
-            .search-field input:focus,
-            .search-field select:focus {
-                border-color: var(--primary-light);
-                box-shadow: 0 0 0 3px rgba(43,120,255,.12);
-            }
-
-            .search-field input[type="text"] {
-                width: 190px;
-            }
-
-    .meta-row {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 16px;
+    .search-field input:focus,
+    .search-field select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(43,120,255,.12);
     }
 
-    .meta-field {
-        display: flex;
-        align-items: center;
-        gap: 6px;
+    .search-field input[type="text"] { width: 190px; }
+
+    .search-btn {
+        padding: 5px 16px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--primary);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background .13s;
     }
 
-        .meta-field label {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-weight: 500;
-            white-space: nowrap;
-        }
+    .search-btn:hover { background: var(--primary-light); }
 
-        .meta-field input {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 12px;
-            padding: 3px 7px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            background: var(--surface);
-            width: 90px;
-            outline: none;
-        }
+    .meta-row            { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .meta-field          { display: flex; align-items: center; gap: 6px; }
+    .meta-field label    { font-size: 11px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+
+    .meta-field input {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        padding: 3px 7px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--surface);
+        width: 90px;
+        outline: none;
+    }
+
+    /* ── Search feedback ── */
+    .search-feedback {
+        font-size: 13px;
+        color: var(--text-muted);
+        padding: 4px 0;
+    }
+
+    .search-feedback.no-results { color: var(--accent); }
+    .search-feedback.has-results { color: #16a34a; font-weight: 500; }
 
     /* ── Content area ── */
-    .content-area {
-        display: flex;
-        gap: 12px;
-        flex: 1;
-    }
+    .content-area { display: flex; gap: 12px; flex: 1; }
 
     .table-wrap {
         flex: 1;
@@ -256,47 +235,29 @@
         overflow: hidden;
     }
 
-    .cat-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
+    .cat-table              { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .cat-table thead tr     { background: var(--table-header); }
+
+    .cat-table thead th {
+        padding: 9px 13px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 600;
+        color: #fff;
+        letter-spacing: .05em;
+        text-transform: uppercase;
     }
 
-        .cat-table thead tr {
-            background: var(--table-header);
-        }
+    .cat-table tbody tr          { border-bottom: 1px solid var(--border); transition: background .12s; }
+    .cat-table tbody tr:hover    { background: var(--action-hover); }
+    .cat-table tbody td          { padding: 9px 13px; font-size: 13px; color: var(--text-main); }
 
-        .cat-table thead th {
-            padding: 9px 13px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 600;
-            color: #fff;
-            letter-spacing: .05em;
-            text-transform: uppercase;
-        }
-
-        .cat-table tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: background .12s;
-        }
-
-            .cat-table tbody tr:hover {
-                background: var(--action-hover);
-            }
-
-        .cat-table tbody td {
-            padding: 9px 13px;
-            font-size: 13px;
-            color: var(--text-main);
-        }
-
-        .cat-table .empty-row td {
-            color: var(--text-muted);
-            font-style: italic;
-            text-align: center;
-            padding: 40px 0;
-        }
+    .cat-table .empty-row td {
+        color: var(--text-muted);
+        font-style: italic;
+        text-align: center;
+        padding: 40px 0;
+    }
 
     /* ── Right action panel ── */
     .action-panel {
@@ -325,29 +286,10 @@
         transition: background .13s, color .13s, border-color .13s, box-shadow .13s;
     }
 
-        .act-btn:hover {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-            box-shadow: var(--shadow-md);
-        }
-
-        .act-btn.act-danger {
-            color: var(--accent);
-            border-color: #f5c6cb;
-        }
-
-            .act-btn.act-danger:hover {
-                background: var(--accent);
-                color: #fff;
-                border-color: var(--accent);
-            }
-
-    .act-divider {
-        border: none;
-        border-top: 1px solid var(--border);
-        margin: 2px 0;
-    }
+    .act-btn:hover            { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: var(--shadow-md); }
+    .act-btn.act-danger       { color: var(--accent); border-color: #f5c6cb; }
+    .act-btn.act-danger:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .act-divider              { border: none; border-top: 1px solid var(--border); margin: 2px 0; }
 </style>
 
 <div class="catalogue-wrap">
@@ -378,11 +320,10 @@
 
         <!-- Toolbar -->
         <div class="cat-toolbar">
-            <a asp-controller="Catalogue" asp-action="Clear" class="tb-btn">Clear</a>
+            <a asp-controller="Catalogue" asp-action="Index" class="tb-btn">Clear</a>
             <a asp-controller="Catalogue" asp-action="Duplicate" class="tb-btn">Duplicate</a>
             <a asp-controller="Catalogue" asp-action="Update" class="tb-btn">Update</a>
             <a asp-controller="Catalogue" asp-action="Delete" class="tb-btn tb-danger">Delete</a>
-            <a asp-controller="Catalogue" asp-action="Query" class="tb-btn">Query</a>
             <div class="tb-divider"></div>
             <a asp-controller="Catalogue" asp-action="UploadPictures" class="tb-btn">Upload Pictures</a>
             <a asp-controller="Catalogue" asp-action="RemovePicture" class="tb-btn">Remove Picture</a>
@@ -399,48 +340,68 @@
         </div>
 
         <!-- Search panel -->
-        <div class="search-panel">
-            <div class="search-row">
-                <div class="search-field">
-                    <label>Search Text</label>
-                    <input type="text" value="@Model.SearchText" placeholder="Enter search…" />
+        <form asp-controller="Catalogue" asp-action="Search" method="post">
+            @Html.AntiForgeryToken()
+            <div class="search-panel">
+                <div class="search-row">
+                    <div class="search-field">
+                        <label>Search Text</label>
+                        <input type="text" name="SearchText" value="@Model.SearchText" placeholder="Enter search…" />
+                    </div>
+                    <div class="search-field">
+                        <label>Search Method</label>
+                        <select name="SearchMethod">
+                            @foreach (var method in Model.SearchMethods)
+                            {
+                                <option value="@method" selected="@(Model.SearchMethod == method)">@method</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="search-field">
+                        <label>Lib Group</label>
+                        <select name="LibGroup">
+                            @foreach (var group in Model.LibGroups)
+                            {
+                                <option value="@group" selected="@(Model.LibGroup == group)">@group</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="search-btn">Search</button>
                 </div>
-                <div class="search-field">
-                    <label>Search Method</label>
-                    <select>
-                        <option selected="@(Model.SearchMethod == "KW Anywhere")">KW Anywhere</option>
-                        <option selected="@(Model.SearchMethod == "KW Exact")">KW Exact</option>
-                        <option selected="@(Model.SearchMethod == "Title")">Title</option>
-                        <option selected="@(Model.SearchMethod == "Author")">Author</option>
-                        <option selected="@(Model.SearchMethod == "ISBN")">ISBN</option>
-                    </select>
-                </div>
-                <div class="search-field">
-                    <label>Lib Group</label>
-                    <select>
-                        <option>LIBRARY</option>
-                    </select>
+                <div class="meta-row">
+                    <div class="meta-field">
+                        <label>OPAC View Restriction</label>
+                        <input type="text" name="OpacViewRestriction" value="@Model.OpacViewRestriction" />
+                    </div>
+                    <div class="meta-field">
+                        <label>Security</label>
+                        <input type="text" name="Security" value="@Model.Security" style="width:50px;" />
+                    </div>
+                    <div class="meta-field">
+                        <label>Library Group</label>
+                        <input type="text" name="LibraryGroup" value="@Model.LibraryGroup" />
+                    </div>
+                    <div class="meta-field">
+                        <label>Template Id</label>
+                        <input type="text" name="TemplateId" value="@Model.TemplateId" style="width:70px;" />
+                    </div>
                 </div>
             </div>
-            <div class="meta-row">
-                <div class="meta-field">
-                    <label>OPAC View Restriction</label>
-                    <input type="text" value="@Model.OpacViewRestriction" />
-                </div>
-                <div class="meta-field">
-                    <label>Security</label>
-                    <input type="text" value="@Model.Security" style="width:50px;" />
-                </div>
-                <div class="meta-field">
-                    <label>Library Group</label>
-                    <input type="text" value="@Model.LibraryGroup" />
-                </div>
-                <div class="meta-field">
-                    <label>Template Id</label>
-                    <input type="text" value="@Model.TemplateId" style="width:70px;" />
-                </div>
-            </div>
-        </div>
+
+            <!-- Search feedback -->
+            @if (!string.IsNullOrEmpty(Model.SearchText))
+            {
+                if (Model.Items.Any())
+                {
+                    <div class="search-feedback has-results">@Model.Items.Count result(s) found for "@Model.SearchText"</div>
+                }
+                else
+                {
+                    <div class="search-feedback no-results">No results found for "@Model.SearchText"</div>
+                }
+            }
+
+        </form>
 
         <!-- Table + right actions -->
         <div class="content-area">
@@ -448,9 +409,9 @@
                 <table class="cat-table">
                     <thead>
                         <tr>
-                            <th style="width:100px;">Tag</th>
-                            <th style="width:40%;">Tag Description</th>
-                            <th>Tag Details</th>
+                            <th style="width:100px;">Ref No</th>
+                            <th style="width:40%;">Title</th>
+                            <th>Author</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -468,7 +429,7 @@
                         else
                         {
                             <tr class="empty-row">
-                                <td colspan="3">No catalogue records found.</td>
+                                <td colspan="3">No catalogue records found. Use the search above to find records.</td>
                             </tr>
                         }
                     </tbody>
