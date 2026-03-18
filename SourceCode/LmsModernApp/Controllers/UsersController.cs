@@ -12,16 +12,23 @@ namespace LmsModernApp.Controllers
     public class UsersController : Controller
     {
         private readonly IBorrowerRepository _borrowerRepository;
+        private readonly IOperatorRepository _operatorRepository;
 
-        public UsersController(IBorrowerRepository borrowerRepository)
+        public UsersController(IBorrowerRepository borrowerRepository, IOperatorRepository operatorRepository)
         {
             _borrowerRepository = borrowerRepository;
+            _operatorRepository = operatorRepository;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? id)
         {
             var model = new BorrowerMaintenanceViewModel();
             await PopulateLookupsAsync(model);
+
+            if (id.HasValue)
+            {
+                HttpContext.Session.SetInt32("SelectedBorrowerId", id.Value);
+            }
 
             var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
             if (selectedId.HasValue)
@@ -34,6 +41,77 @@ namespace LmsModernApp.Controllers
             }
 
             return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Query(BorrowerMaintenanceViewModel model)
+        {
+            var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
+            if (op == null) return Unauthorized();
+
+            var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
+            
+            // Extract search criteria from the model (which uses the Borrower object as a container)
+            var criteria = new BorrowerSearchCriteria
+            {
+                BorBarNo = model.Borrower.BorBarNo,
+                BorSurname = model.Borrower.BorSurname,
+                BorGiven = model.Borrower.BorGiven,
+                BorType = model.Borrower.BorType,
+                BorGroup = model.Borrower.BorGroup,
+                BorClass = model.Borrower.BorClass,
+                BorStatus = model.Borrower.BorStatus,
+                BorLocation = model.Borrower.BorLocation,
+                BorSex = model.Borrower.BorSex,
+                BorDob = model.Borrower.BorDob.HasValue ? model.Borrower.BorDob.Value.ToDateTime(TimeOnly.MinValue) : null,
+                // Condition would need to come from a separate field in a real search model
+                BorDobCondition = Request.Form["BorDobCondition"].ToString() ?? "equal"
+            };
+
+            Lms.Data.PagedResult<Lms.Data.BorrowerWithAddress> results = await _borrowerRepository.SearchBorrowersAsync(
+                criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
+                criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
+                criteria.BorDobCondition, criteria.FileNumber, allowedGroups, 1, 100, "BorSurname", "ASC");
+
+            if (results.TotalItems == 0)
+            {
+                TempData["ErrorMessage"] = "No borrowers found matching your criteria.";
+                return RedirectToAction(nameof(Index));
+            }
+            
+            if (results.TotalItems == 1)
+            {
+                HttpContext.Session.SetInt32("SelectedBorrowerId", results.Items[0].Borrower.BorNo);
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Store criteria in session for the table view
+            TempData["SearchCriteria"] = System.Text.Json.JsonSerializer.Serialize(criteria);
+            
+            return RedirectToAction(nameof(BorrowerResultTable));
+        }
+
+        public async Task<IActionResult> BorrowerResultTable(int page = 1, string sort = "BorSurname", string order = "ASC")
+        {
+            var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
+            if (op == null) return Unauthorized();
+
+            var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
+
+            // Retrieve full criteria from TempData
+            var criteriaJson = TempData.Peek("SearchCriteria")?.ToString();
+            var criteria = !string.IsNullOrEmpty(criteriaJson) 
+                ? System.Text.Json.JsonSerializer.Deserialize<BorrowerSearchCriteria>(criteriaJson)
+                : new BorrowerSearchCriteria();
+
+            if (criteria == null) criteria = new BorrowerSearchCriteria();
+
+            Lms.Data.PagedResult<Lms.Data.BorrowerWithAddress> results = await _borrowerRepository.SearchBorrowersAsync(
+                criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
+                criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
+                criteria.BorDobCondition, criteria.FileNumber, allowedGroups, page, 20, sort, order);
+
+            return View(results);
         }
 
         [HttpPost]
@@ -61,6 +139,16 @@ namespace LmsModernApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(BorrowerMaintenanceViewModel model)
         {
+            // Mandatory Field Validation
+            if (string.IsNullOrWhiteSpace(model.Borrower.BorBarNo))
+                ModelState.AddModelError("Borrower.BorBarNo", "Barcode is required.");
+            if (string.IsNullOrWhiteSpace(model.Borrower.BorSurname))
+                ModelState.AddModelError("Borrower.BorSurname", "Surname is required.");
+            if (string.IsNullOrWhiteSpace(model.Borrower.BorGiven))
+                ModelState.AddModelError("Borrower.BorGiven", "Given Name is required.");
+            if (string.IsNullOrWhiteSpace(model.Borrower.BorLocation))
+                ModelState.AddModelError("Borrower.BorLocation", "Location is required.");
+
             if (ModelState.IsValid)
             {
                 var success = await _borrowerRepository.SaveBorrowerAsync(model.Borrower);
@@ -68,18 +156,19 @@ namespace LmsModernApp.Controllers
                 {
                     HttpContext.Session.SetInt32("SelectedBorrowerId", model.Borrower.BorNo);
                     TempData["SuccessMessage"] = "Borrower saved successfully.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Index), new { id = model.Borrower.BorNo });
                 }
-                model.Message = "Error saving borrower.";
+                TempData["ErrorMessage"] = "Error saving borrower to database.";
             }
 
             await PopulateLookupsAsync(model);
             return View("Index", model);
         }
 
-        public IActionResult New()
+        public IActionResult Clear()
         {
             HttpContext.Session.Remove("SelectedBorrowerId");
+            TempData.Remove("SearchCriteria");
             return RedirectToAction(nameof(Index));
         }
 
@@ -91,13 +180,14 @@ namespace LmsModernApp.Controllers
             if (success)
             {
                 HttpContext.Session.Remove("SelectedBorrowerId");
-                TempData["SuccessMessage"] = "Borrower deleted.";
+                TempData["SuccessMessage"] = "Borrower deleted successfully.";
+                return RedirectToAction(nameof(Index));
             }
             else
             {
-                TempData["ErrorMessage"] = "Error deleting borrower.";
+                TempData["ErrorMessage"] = "Could not delete borrower. Ensure they have no active loans.";
+                return RedirectToAction(nameof(Index), new { id = id });
             }
-            return RedirectToAction(nameof(Index));
         }
 
         private async Task PopulateLookupsAsync(BorrowerMaintenanceViewModel model)
@@ -117,20 +207,29 @@ namespace LmsModernApp.Controllers
             return View();
         }
 
-        public async Task<IActionResult> FileList(int page = 1)
+        public async Task<IActionResult> FileList(string? creator, int page = 1, string sortBy = "FileDesc", string sortOrder = "ASC", string? searchTerm = null)
         {
-            var operatorName = User.Identity?.Name ?? "UNKNOWN";
-            var pageSize = 8;
+            var currentOperator = User.Identity?.Name ?? "UNKNOWN";
+            var selectedCreator = creator ?? currentOperator;
+            var pageSize = 10;
+
+            // Use the improved Repository method with live paging and sorting
+            var result = await _borrowerRepository.GetFileSetsByCreatorAsync(selectedCreator, page, pageSize, sortBy, sortOrder, searchTerm);
             
-            var totalItems = await _borrowerRepository.GetFileSetsCountByOperatorAsync(operatorName);
-            var fileSets = await _borrowerRepository.GetFileSetsByOperatorAsync(operatorName, page, pageSize);
+            var allOperators = await _operatorRepository.GetAllOperatorsAsync();
+            var operatorsLookup = allOperators.Select(o => new LookupItem { Code = o.OperName, Name = o.OperName }).ToList();
+            operatorsLookup.Insert(0, new LookupItem { Code = "SYSGLOBALFILES", Name = "Global Files" });
 
             var model = new BorrowerFileListViewModel
             {
-                FileSets = fileSets,
+                SelectedOperator = selectedCreator,
+                Operators = operatorsLookup,
+                FileSets = result.Items,
                 CurrentPage = page,
-                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
-                OperatorName = operatorName
+                TotalPages = result.TotalPages,
+                SortBy = sortBy,
+                SortOrder = sortOrder,
+                SearchTerm = searchTerm
             };
 
             var selectedId = HttpContext.Session.GetInt32("SelectedFileNumber");
@@ -140,12 +239,49 @@ namespace LmsModernApp.Controllers
                 if (selectedSet != null)
                 {
                     model.SelectedFileSet = selectedSet;
-                    model.CanEdit = selectedSet.FileOper == operatorName || selectedSet.FileOperAccess == "A";
-                    model.CanDelete = selectedSet.FileOper == operatorName;
+                    model.CanEdit = selectedSet.FileOper == currentOperator || selectedSet.FileOperAccess == "A";
+                    model.CanDelete = selectedSet.FileOper == currentOperator;
+                    model.RelatedReadingListLinks = await _borrowerRepository.GetRelatedReadingListsAsync(selectedId.Value);
                 }
             }
 
+            model.GeneralReadingLists = await _borrowerRepository.GetGeneralCatalogFilesAsync();
             return View(model);
+        }
+
+        public async Task<IActionResult> QueryFile(int id)
+        {
+            var criteria = new BorrowerSearchCriteria
+            {
+                FileNumber = id
+            };
+            
+            TempData["SearchCriteria"] = System.Text.Json.JsonSerializer.Serialize(criteria);
+            
+            return RedirectToAction(nameof(BorrowerResultTable));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveReadingListLinks(int borrowerFileNumber, List<int> selectedCatFileNumbers, List<DateTime> expiryDates)
+        {
+            var links = new List<AFileSetLibCat>();
+            if (selectedCatFileNumbers != null)
+            {
+                for (int i = 0; i < selectedCatFileNumbers.Count; i++)
+                {
+                    links.Add(new AFileSetLibCat
+                    {
+                        FileNumberCat = selectedCatFileNumbers[i],
+                        ExpirationDate = expiryDates[i],
+                        LastModifyBy = User.Identity?.Name ?? "SYSTEM",
+                        LastModifyOn = DateTime.Now
+                    });
+                }
+            }
+
+            await _borrowerRepository.SaveRelatedReadingListsAsync(borrowerFileNumber, links);
+            TempData["SuccessMessage"] = "Reading list relationships updated.";
+            return RedirectToAction(nameof(FileList));
         }
 
         [HttpPost]
@@ -153,6 +289,12 @@ namespace LmsModernApp.Controllers
         {
             HttpContext.Session.SetInt32("SelectedFileNumber", fileNumber);
             return RedirectToAction(nameof(FileList), new { page });
+        }
+
+        public IActionResult ClearFileSet()
+        {
+            HttpContext.Session.Remove("SelectedFileNumber");
+            return RedirectToAction(nameof(FileList));
         }
 
         [HttpPost]

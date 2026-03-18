@@ -1,16 +1,32 @@
 @model LmsModernApp.Models.BorrowerFileListViewModel
 @{
-    ViewData["Title"] = "File list";
+    ViewData["Title"] = "Borrower File List";
 }
+
+<style>
+    .toolbar-btn { min-width: 90px; font-size: 0.85rem; }
+    .file-table th, .reading-table th { font-size: 0.85rem; background-color: #f8f9fa; }
+    .file-table td, .reading-table td { font-size: 0.85rem; vertical-align: middle; }
+    .selected-row { background-color: #e7f1ff !important; border: 2px solid #0d6efd !important; }
+    .reading-row { cursor: pointer; transition: background-color 0.2s; }
+    .reading-row:hover { background-color: #f1f8ff; }
+    .sortable-header { cursor: pointer; transition: background-color 0.2s; }
+    .sortable-header:hover { background-color: #e9ecef; }
+</style>
 
 <partial name="_DashboardHeader" />
 
-<div class="row mt-4">
+<div class="row mt-3">
     <partial name="_UsersSidebar" />
 
     <div class="col-md-10">
-        <h2>File list</h2>
-        <hr />
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="text-primary mb-0">Borrower File List</h4>
+            @if (Model.SelectedFileSet.FileNumber > 0)
+            {
+                <div class="text-muted small">Selected File: <strong>@Model.SelectedFileSet.FileDesc</strong> (ID: @Model.SelectedFileSet.FileNumber)</div>
+            }
+        </div>
 
         @if (TempData["SuccessMessage"] != null)
         {
@@ -20,158 +36,233 @@
             </div>
         }
 
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                Borrower Lists (File Sets)
+        <!-- Action Toolbar -->
+        <div class="d-flex flex-wrap mb-3 border p-1 bg-light rounded shadow-sm align-items-center" role="toolbar">
+            <form asp-action="EmptyFileSet" method="post" class="me-1">
+                <input type="hidden" name="fileNumber" value="@Model.SelectedFileSet.FileNumber" />
+                <button type="submit" class="btn btn-outline-secondary toolbar-btn" @(Model.SelectedFileSet.FileNumber == 0 || !Model.CanEdit ? "disabled" : "")><i class="bi bi-eraser"></i> Empty</button>
+            </form>
+            
+            <button type="button" class="btn btn-primary toolbar-btn me-1" onclick="document.getElementById('editForm').submit()" @(!Model.CanEdit && Model.SelectedFileSet.FileNumber > 0 ? "disabled" : "")><i class="bi bi-save"></i> Save</button>
+            
+            <button type="button" class="btn btn-outline-secondary toolbar-btn me-1" onclick="location.href='@Url.Action("ClearFileSet")'"><i class="bi bi-file-earmark-plus"></i> Clear/New</button>
+            
+            <form asp-action="DeleteFileSet" method="post" class="me-1">
+                <input type="hidden" name="fileNumber" value="@Model.SelectedFileSet.FileNumber" />
+                <button type="submit" class="btn btn-outline-danger toolbar-btn" @(Model.SelectedFileSet.FileNumber == 0 || !Model.CanDelete ? "disabled" : "")><i class="bi bi-trash"></i> Delete</button>
+            </form>
+
+            <button type="button" class="btn btn-outline-success toolbar-btn me-1" onclick="document.getElementById('readingListForm').submit()" @(Model.SelectedFileSet.FileNumber == 0 || !Model.CanEdit ? "disabled" : "")><i class="bi bi-book"></i> General Reading List</button>
+            
+            <button type="button" class="btn btn-outline-info toolbar-btn" @(Model.SelectedFileSet.FileNumber == 0 ? "disabled" : "")><i class="bi bi-envelope"></i> Email</button>
+        </div>
+
+        <!-- Filter & Search Row -->
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-5">
+                <div class="d-flex align-items-center">
+                    <label class="fw-bold small me-2 text-nowrap">View files by:</label>
+                    <select id="creatorFilter" class="form-select form-select-sm" onchange="filterByCreator(this.value)">
+                        @foreach (var op in Model.Operators)
+                        {
+                            <option value="@op.Code" selected='@(Model.SelectedOperator == op.Code)'>@op.Name</option>
+                        }
+                    </select>
+                </div>
             </div>
-            <div class="card-body">
-                <table class="table table-hover">
+            <div class="col-md-4 ms-auto">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="fileSearch" class="form-control" placeholder="Search file name..." 
+                           value="@Model.SearchTerm" onkeypress="if(event.key==='Enter') applySearch(this.value)" />
+                    @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                    {
+                        <button class="btn btn-outline-secondary" type="button" onclick="applySearch('')"><i class="bi bi-x-lg"></i></button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination Navigation (Above Table) -->
+        <div class="d-flex align-items-center mb-2 bg-light border p-2 rounded shadow-sm">
+            <div class="btn-group btn-group-sm me-3">
+                <a asp-action="FileList" asp-route-creator="@Model.SelectedOperator" asp-route-page="1" 
+                   asp-route-sortBy="@Model.SortBy" asp-route-sortOrder="@Model.SortOrder" asp-route-searchTerm="@Model.SearchTerm"
+                   class="btn btn-outline-secondary @(Model.CurrentPage <= 1 ? "disabled" : "")">First</a>
+                <a asp-action="FileList" asp-route-creator="@Model.SelectedOperator" asp-route-page="@(Model.CurrentPage - 1)" 
+                   asp-route-sortBy="@Model.SortBy" asp-route-sortOrder="@Model.SortOrder" asp-route-searchTerm="@Model.SearchTerm"
+                   class="btn btn-outline-secondary @(Model.CurrentPage <= 1 ? "disabled" : "")">Back</a>
+            </div>
+            
+            <span class="small fw-bold text-muted me-3">Page @Model.CurrentPage of @Model.TotalPages</span>
+
+            <div class="btn-group btn-group-sm me-auto">
+                <a asp-action="FileList" asp-route-creator="@Model.SelectedOperator" asp-route-page="@(Model.CurrentPage + 1)" 
+                   asp-route-sortBy="@Model.SortBy" asp-route-sortOrder="@Model.SortOrder" asp-route-searchTerm="@Model.SearchTerm"
+                   class="btn btn-outline-secondary @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">Next</a>
+                <a asp-action="FileList" asp-route-creator="@Model.SelectedOperator" asp-route-page="@Model.TotalPages" 
+                   asp-route-sortBy="@Model.SortBy" asp-route-sortOrder="@Model.SortOrder" asp-route-searchTerm="@Model.SearchTerm"
+                   class="btn btn-outline-secondary @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">Last</a>
+            </div>
+
+            <div class="small text-muted">
+                Sorting by: <span class="fw-bold">@Model.SortBy</span> (@Model.SortOrder)
+            </div>
+        </div>
+
+        <!-- Main File List Table -->
+        <div class="card shadow-sm mb-4">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover file-table mb-0">
                     <thead>
                         <tr>
-                            <th>File Name</th>
-                            <th>Date Created</th>
-                            <th>Quantity</th>
-                            <th>Owner</th>
-                            <th>Access</th>
-                            <th>Action</th>
+                            <th class="sortable-header" onclick="applySort('FileDesc')">
+                                File Name @(Model.SortBy == "FileDesc" ? (Model.SortOrder == "ASC" ? "↑" : "↓") : "")
+                            </th>
+                            <th class="text-center sortable-header" onclick="applySort('FileDate')">
+                                Date @(Model.SortBy == "FileDate" ? (Model.SortOrder == "ASC" ? "↑" : "↓") : "")
+                            </th>
+                            <th class="text-center sortable-header" onclick="applySort('FileQty')">
+                                Quantity @(Model.SortBy == "FileQty" ? (Model.SortOrder == "ASC" ? "↑" : "↓") : "")
+                            </th>
+                            <th style="width: 100px;" class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in Model.FileSets)
+                        @foreach (var set in Model.FileSets)
                         {
-                            <tr class="@(Model.SelectedFileSet.FileNumber == item.FileNumber ? "table-primary" : "")">
-                                <td>@item.FileDesc</td>
-                                <td>@(item.FileDate?.ToString("d") ?? "N/A")</td>
-                                <td>@item.FileQty</td>
-                                <td>@item.FileOper</td>
-                                <td>@(item.FileOperAccess == "A" ? "Global" : "Private")</td>
+                            <tr class='@(Model.SelectedFileSet.FileNumber == set.FileNumber ? "table-primary" : "")'>
                                 <td>
+                                    <a asp-action="QueryFile" asp-route-id="@set.FileNumber" class="text-decoration-none fw-bold">
+                                        <i class="bi bi-folder2-open me-2"></i>@set.FileDesc
+                                    </a>
+                                </td>
+                                <td class="text-center small text-muted">@(set.FileDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                <td class="text-center"><span class="badge bg-light text-dark border">@set.FileQty</span></td>
+                                <td class="text-center">
                                     <form asp-action="SelectFileSet" method="post">
-                                        <input type="hidden" name="fileNumber" value="@item.FileNumber" />
-                                        <input type="hidden" name="page" value="@Model.CurrentPage" />
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">Select</button>
+                                        <input type="hidden" name="fileNumber" value="@set.FileNumber" />
+                                        <button type="submit" class="btn btn-outline-primary btn-sm px-3">Select</button>
                                     </form>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
-
-                <!-- Pagination -->
-                @if (Model.TotalPages > 1)
-                {
-                    <nav>
-                        <ul class="pagination pagination-sm justify-content-center">
-                            @for (int i = 1; i <= Model.TotalPages; i++)
-                            {
-                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                    <a class="page-link" asp-action="FileList" asp-route-page="@i">@i</a>
-                                </li>
-                            }
-                        </ul>
-                    </nav>
-                }
             </div>
         </div>
 
-        <!-- Maintenance Form (Bottom) -->
-        <div class="card">
-            <div class="card-header bg-secondary text-white">
-                List Maintenance
-            </div>
-            <div class="card-body">
-                @if (Model.SelectedFileSet.FileNumber > 0)
-                {
-                    <form asp-action="UpdateFileSet" method="post">
-                        <input type="hidden" asp-for="SelectedFileSet.FileNumber" />
-                        <input type="hidden" asp-for="CurrentPage" />
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">File Name</label>
-                                <input asp-for="SelectedFileSet.FileDesc" class="form-control" readonly="@(!Model.CanEdit)" />
+        <!-- Edit Section & General Reading List -->
+        <div class="row">
+            <!-- Borrower File Details -->
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light py-2"><h6 class="mb-0 small fw-bold">Borrower File Details</h6></div>
+                    <div class="card-body p-3">
+                        <form id="editForm" asp-action="UpdateFileSet" method="post">
+                            <input type="hidden" asp-for="SelectedFileSet.FileNumber" />
+                            <div class="mb-2">
+                                <label class="small fw-bold">File Name</label>
+                                <input asp-for="SelectedFileSet.FileDesc" class="form-control form-control-sm" required />
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Access Level</label>
-                                <select asp-for="SelectedFileSet.FileOperAccess" class="form-select" disabled="@(!Model.CanEdit)">
-                                    <option value="P">Private</option>
-                                    <option value="A">Global (Shared)</option>
+                            <div class="mb-2">
+                                <label class="small fw-bold">Permissions</label>
+                                <select asp-for="SelectedFileSet.FileOperAccess" class="form-select form-select-sm">
+                                    <option value="N">Only Me (NONE)</option>
+                                    <option value="A">Allow Others (FULL)</option>
+                                    <option value="G">Global (GLOBAL)</option>
                                 </select>
                             </div>
-                            <div class="col-md-3 d-flex align-items-end">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" checked="@(Model.SelectedFileSet.FileOperAccess == "A")" disabled>
-                                    <label class="form-check-label">Allow Others</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 d-flex gap-2">
-                            <button type="submit" class="btn btn-primary" disabled="@(!Model.CanEdit)">Save Changes</button>
-                            <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#emptyModal" disabled="@(!Model.CanDelete)">Empty List</button>
-                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" disabled="@(!Model.CanDelete)">Delete List</button>
-                            <button type="button" class="btn btn-outline-info" onclick="alert('Email feature coming soon!')">Email List</button>
-                        </div>
-                    </form>
-                }
-                else
-                {
-                    <div class="text-center py-4 text-muted">
-                        <p>Select a list from the table above to view or modify details.</p>
+                        </form>
                     </div>
-                }
+                </div>
+            </div>
+
+            <!-- General Reading List Table -->
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 small fw-bold">General Reading List Relationship</h6>
+                        <span class="text-muted" style="font-size: 0.7rem;">Double-click to link/unlink catalog lists</span>
+                    </div>
+                    <div class="table-responsive" style="max-height: 300px;">
+                        <form id="readingListForm" asp-action="SaveReadingListLinks" method="post">
+                            <input type="hidden" name="borrowerFileNumber" value="@Model.SelectedFileSet.FileNumber" />
+                            <table class="table table-sm table-hover reading-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Catalog File Name</th>
+                                        <th style="width: 150px;">Expiry Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var cat in Model.GeneralReadingLists)
+                                    {
+                                        var link = Model.RelatedReadingListLinks.FirstOrDefault(l => l.FileNumberCat == cat.FileNumber);
+                                        var isSelected = link != null;
+                                        <tr class="reading-row @(isSelected ? "selected-row" : "")" 
+                                            ondblclick="toggleReadingList(this, @cat.FileNumber)">
+                                            <td>
+                                                <input type="checkbox" name="selectedCatFileNumbers" value="@cat.FileNumber" 
+                                                       class="d-none reading-check" @(isSelected ? "checked" : "") />
+                                                @cat.FileDesc
+                                            </td>
+                                            <td>
+                                                <input type="date" name="expiryDates" class="form-control form-control-sm h-auto py-0" 
+                                                       value='@(isSelected ? link.ExpirationDate.ToString("yyyy-MM-dd") : "")' />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- Modals -->
-    @if (Model.SelectedFileSet.FileNumber > 0)
-    {
-        <!-- Empty Modal -->
-        <div class="modal fade" id="emptyModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Empty List</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        Are you sure you want to remove all members from <strong>@Model.SelectedFileSet.FileDesc</strong>? This cannot be undone.
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <form asp-action="EmptyFileSet" method="post">
-                            <input type="hidden" name="fileNumber" value="@Model.SelectedFileSet.FileNumber" />
-                            <input type="hidden" name="page" value="@Model.CurrentPage" />
-                            <button type="submit" class="btn btn-warning">Empty Now</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Delete Modal -->
-        <div class="modal fade" id="deleteModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title text-danger">Delete List</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        Are you sure you want to permanently delete the list <strong>@Model.SelectedFileSet.FileDesc</strong>?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <form asp-action="DeleteFileSet" method="post">
-                            <input type="hidden" name="fileNumber" value="@Model.SelectedFileSet.FileNumber" />
-                            <input type="hidden" name="page" value="@Model.CurrentPage" />
-                            <button type="submit" class="btn btn-danger">Delete Forever</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-
 </div>
+
+@section Scripts {
+    <script>
+        function filterByCreator(creator) {
+            window.location.href = '@Url.Action("FileList")' + '?creator=' + encodeURIComponent(creator);
+        }
+
+        function applySearch(term) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('searchTerm', term);
+            url.searchParams.set('page', '1'); // Reset to page 1 on search
+            window.location.href = url.toString();
+        }
+
+        function applySort(field) {
+            const url = new URL(window.location.href);
+            const currentSort = url.searchParams.get('sortBy') || 'FileDesc';
+            const currentOrder = url.searchParams.get('sortOrder') || 'ASC';
+            
+            let nextOrder = 'ASC';
+            if (currentSort === field && currentOrder === 'ASC') {
+                nextOrder = 'DESC';
+            }
+            
+            url.searchParams.set('sortBy', field);
+            url.searchParams.set('sortOrder', nextOrder);
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
+        }
+
+        function toggleReadingList(row, id) {
+            const checkbox = row.querySelector('.reading-check');
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                row.classList.add('selected-row');
+            } else {
+                row.classList.remove('selected-row');
+                // Clear the date if unselected
+                row.querySelector('input[type="date"]').value = '';
+            }
+        }
+    </script>
+}

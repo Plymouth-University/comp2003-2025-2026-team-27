@@ -42,13 +42,12 @@
 
         <!-- Professional Toolbar -->
         <div class="d-flex flex-wrap mb-3 border p-1 bg-light rounded shadow-sm align-items-center" role="toolbar">
-            <button type="button" class="btn btn-outline-secondary toolbar-btn me-1" onclick="location.href='@Url.Action("New")'"><i class="bi bi-eraser"></i> Clear</button>
-            <button type="button" class="btn btn-outline-secondary toolbar-btn me-1" onclick="location.href='@Url.Action("New")'"><i class="bi bi-file-earmark-plus"></i> New</button>
+            <button type="button" class="btn btn-outline-secondary toolbar-btn me-1" onclick="location.href='@Url.Action("Clear")'"><i class="bi bi-eraser"></i> Clear</button>
             <button type="button" class="btn btn-primary toolbar-btn me-1" onclick="document.getElementById('mainForm').submit()"><i class="bi bi-save"></i> Save</button>
             <button type="button" class="btn btn-outline-danger toolbar-btn me-3" data-bs-toggle="modal" data-bs-target="#deleteModal" @(Model.Borrower.BorNo == 0 ? "disabled" : "")><i class="bi bi-trash"></i> Delete</button>
 
-            <button type="button" class="btn btn-outline-info toolbar-btn me-1"><i class="bi bi-search"></i> Query</button>
-            <button type="button" class="btn btn-outline-secondary toolbar-btn me-3"><i class="bi bi-table"></i> Table View</button>
+            <button type="button" class="btn btn-outline-info toolbar-btn me-1" onclick="submitQuery()"><i class="bi bi-search"></i> Query</button>
+            <button type="button" class="btn btn-outline-secondary toolbar-btn me-3" onclick="location.href='@Url.Action("BorrowerResultTable")'"><i class="bi bi-table"></i> Table View</button>
 
             <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="First"><i class="bi bi-chevron-bar-left"></i> First</button>
             <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="Previous"><i class="bi bi-chevron-left"></i> Prev</button>
@@ -108,14 +107,17 @@
                     <div class="mb-2">
                         <label class="lms-label">Barcode</label>
                         <input asp-for="Borrower.BorBarNo" class="form-control form-control-sm" />
+                        <span asp-validation-for="Borrower.BorBarNo" class="text-danger small"></span>
                     </div>
                     <div class="mb-2">
                         <label class="lms-label">Surname</label>
                         <input asp-for="Borrower.BorSurname" class="form-control form-control-sm" required />
+                        <span asp-validation-for="Borrower.BorSurname" class="text-danger small"></span>
                     </div>
                     <div class="mb-2">
                         <label class="lms-label">Given Name</label>
                         <input asp-for="Borrower.BorGiven" class="form-control form-control-sm" required />
+                        <span asp-validation-for="Borrower.BorGiven" class="text-danger small"></span>
                     </div>
                     <div class="mb-2">
                         <label class="lms-label">Middle Name</label>
@@ -140,13 +142,13 @@
                     <div class="mb-2">
                         <label class="lms-label">Birthdate</label>
                         <div class="input-group input-group-sm">
-                            <select class="form-select" style="max-width: 130px;">
+                            <select name="BorDobCondition" class="form-select" style="max-width: 130px;">
                                 <option value="before">Before</option>
                                 <option value="equal" selected>Equal to</option>
                                 <option value="after">After</option>
                             </select>
-                            <input asp-for="Borrower.BorDob" type="date" class="form-control" />
-                            <span class="input-group-text" style="width: 80px;">Age: 0</span>
+                            <input asp-for="Borrower.BorDob" type="date" class="form-control" id="borDob" onchange="calculateAge()" />
+                            <span class="input-group-text" style="width: 80px;" id="ageLabel">Age: 0</span>
                         </div>
                     </div>
                     <div class="mb-2">
@@ -181,6 +183,7 @@
                             <option value="">-- Select --</option>
                             @foreach (var item in Model.Locations) { <option value="@item.Code">@item.Name</option> }
                         </select>
+                        <span asp-validation-for="Borrower.BorLocation" class="text-danger small"></span>
                     </div>
                     <div class="mb-2">
                         <label class="lms-label">Status</label>
@@ -276,7 +279,7 @@
             <div class="row meta-row px-2">
                 <div class="col-md-4">
                     <span class="meta-label">Joined:</span>
-                    <span class="meta-val ms-2">@(Model.Borrower.BorRegdate?.ToString("dd/MM/yyyy") ?? "--/--/----")</span>
+                    <span class="meta-val ms-2">@(Model.Borrower.BorStartMship?.ToString("dd/MM/yyyy") ?? "--/--/----")</span>
                 </div>
                 <div class="col-md-4">
                     <span class="meta-label">At:</span>
@@ -291,7 +294,7 @@
             <div class="row meta-row px-2">
                 <div class="col-md-4">
                     <span class="meta-label">Reg Exp:</span>
-                    <span class="meta-val ms-2">@(Model.Borrower.BorStartMship?.AddYears(1).ToString("dd/MM/yyyy") ?? "--/--/----")</span>
+                    <span class="meta-val ms-2">@(Model.Borrower.BorRegdate?.ToString("dd/MM/yyyy") ?? "--/--/----")</span>
                 </div>
                 <div class="col-md-4">
                     <span class="meta-label">Last active:</span>
@@ -317,6 +320,38 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function submitQuery() {
+            const form = document.getElementById('mainForm');
+            form.action = '@Url.Action("Query")';
+            form.submit();
+        }
+
+        function calculateAge() {
+            const dobInput = document.getElementById('borDob');
+            const ageLabel = document.getElementById('ageLabel');
+            if (!dobInput.value) {
+                ageLabel.textContent = 'Age: 0';
+                return;
+            }
+
+            const birthDate = new Date(dobInput.value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            ageLabel.textContent = 'Age: ' + (age < 0 ? 0 : age);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateAge();
+        });
+    </script>
+}
 
 @if (Model.Borrower.BorNo > 0)
 {
