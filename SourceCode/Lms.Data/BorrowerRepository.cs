@@ -275,6 +275,76 @@ namespace Lms.Data
             return true;
         }
 
+        public async Task<List<FileSetName>> GetWritableFileSetsAsync(string operatorName)
+        {
+            // Can write if Owner OR access is FULL ('A') OR GLOBAL ('GLOBAL')
+            return await _delib.FileSetNames
+                .Where(f => f.FileNumber > 0 && f.FileType == FILE_TYPE_BORROWER && 
+                           (f.FileOper == operatorName || f.FileOperAccess == "A" || f.FileOperAccess == ACCESS_GLOBAL))
+                .OrderBy(f => f.FileDesc)
+                .ToListAsync();
+        }
+
+        public async Task<int> AddBorrowersToFileAsync(int fileNumber, List<int> borNos)
+        {
+            if (borNos == null || borNos.Count == 0) return 0;
+
+            // 1. Filter out already existing links
+            var existingBorNos = await _delib.FileSetData
+                .Where(f => f.FileNumber == fileNumber && borNos.Contains(f.FileNitem ?? 0))
+                .Select(f => f.FileNitem ?? 0)
+                .ToListAsync();
+
+            var newBorNos = borNos.Except(existingBorNos).ToList();
+            if (newBorNos.Count == 0) return 0;
+
+            // 2. Batch insert using raw SQL (efficient)
+            int rowsAffected = 0;
+            foreach (var borNo in newBorNos)
+            {
+                var sql = "INSERT INTO FILE_SET_DATA (FILE_NUMBER, FILE_NITEM) VALUES ({0}, {1})";
+                rowsAffected += await _delib.Database.ExecuteSqlRawAsync(sql, fileNumber, borNo);
+            }
+
+            // 3. Update quantity in header
+            if (rowsAffected > 0)
+            {
+                var updateSql = "UPDATE FILE_SET_NAMES SET FILE_QTY = (SELECT COUNT(*) FROM FILE_SET_DATA WHERE FILE_NUMBER = {0}) WHERE FILE_NUMBER = {0}";
+                await _delib.Database.ExecuteSqlRawAsync(updateSql, fileNumber);
+            }
+
+            return rowsAffected;
+        }
+
+        public async Task<int> RemoveBorrowersFromFileAsync(int fileNumber, List<int> borNos)
+        {
+            if (borNos == null || borNos.Count == 0) return 0;
+
+            // Get the barcodes for these IDs to ensure we can remove legacy records too
+            var barcodes = await _delib.Borrowers
+                .Where(b => borNos.Contains(b.BorNo))
+                .Select(b => b.BorBarNo)
+                .Where(b => b != null)
+                .ToListAsync();
+
+            // Build a flexible delete query that matches on ID OR Barcode
+            // We use parameters for safety
+            var borNosList = string.Join(",", borNos);
+            var barcodesList = barcodes.Count > 0 ? "'" + string.Join("','", barcodes) + "'" : "''";
+
+            var sql = $"DELETE FROM FILE_SET_DATA WHERE FILE_NUMBER = {{0}} AND (FILE_NITEM IN ({borNosList}) OR FILE_ITEM IN ({barcodesList}))";
+            int rowsAffected = await _delib.Database.ExecuteSqlRawAsync(sql, fileNumber);
+
+            // Update quantity in header
+            if (rowsAffected > 0)
+            {
+                var updateSql = "UPDATE FILE_SET_NAMES SET FILE_QTY = (SELECT COUNT(*) FROM FILE_SET_DATA WHERE FILE_NUMBER = {0}) WHERE FILE_NUMBER = {0}";
+                await _delib.Database.ExecuteSqlRawAsync(updateSql, fileNumber);
+            }
+
+            return rowsAffected;
+        }
+
         public async Task<List<Lms.Data.Models.Decat.FileCatName>> GetGeneralCatalogFilesAsync()
         {
             return await _decat.FileCatNames
@@ -342,9 +412,12 @@ namespace Lms.Data
             // 0. File List Filter: Join with FILE_SET_DATA if fileNumber is provided
             if (fileNumber.HasValue)
             {
+                // Improved Join: Check both FileNitem (ID) and FileItem (Barcode) for maximum compatibility
+                // Order by FileSequence as per legacy logic
                 query = from b in query
-                        join f in _delib.FileSetData on b.BorNo equals f.FileNitem
-                        where f.FileNumber == fileNumber.Value
+                        join f in _delib.FileSetData on fileNumber.Value equals f.FileNumber
+                        where b.BorNo == f.FileNitem || (b.BorBarNo != null && b.BorBarNo == f.FileItem)
+                        orderby f.FileSequence
                         select b;
             }
 

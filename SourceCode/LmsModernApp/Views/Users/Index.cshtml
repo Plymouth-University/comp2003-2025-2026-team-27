@@ -49,10 +49,13 @@
             <button type="button" class="btn btn-outline-info toolbar-btn me-1" onclick="submitQuery()"><i class="bi bi-search"></i> Query</button>
             <button type="button" class="btn btn-outline-secondary toolbar-btn me-3" onclick="location.href='@Url.Action("BorrowerResultTable")'"><i class="bi bi-table"></i> Table View</button>
 
-            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="First"><i class="bi bi-chevron-bar-left"></i> First</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="Previous"><i class="bi bi-chevron-left"></i> Prev</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="Next"><i class="bi bi-chevron-right"></i> Next</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-3" title="Last"><i class="bi bi-chevron-bar-right"></i> Last</button>
+            @{
+                var hasNav = !string.IsNullOrEmpty(Context.Session.GetString("NavigationIds"));
+            }
+            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="First" onclick="location.href='@Url.Action("First")'" @(hasNav ? "" : "disabled")><i class="bi bi-chevron-bar-left"></i> First</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="Previous" onclick="location.href='@Url.Action("Prev")'" @(hasNav ? "" : "disabled")><i class="bi bi-chevron-left"></i> Prev</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-1" title="Next" onclick="location.href='@Url.Action("Next")'" @(hasNav ? "" : "disabled")><i class="bi bi-chevron-right"></i> Next</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm toolbar-btn me-3" title="Last" onclick="location.href='@Url.Action("Last")'" @(hasNav ? "" : "disabled")><i class="bi bi-chevron-bar-right"></i> Last</button>
 
             <div class="btn-group" role="group">
                 <button id="btnMore" type="button" class="btn btn-outline-secondary dropdown-toggle toolbar-btn" data-bs-toggle="dropdown" aria-expanded="false">More</button>

@@ -33,6 +33,9 @@ namespace Lms.Data
         Task<bool> SaveFileSetNameAsync(FileSetName fileSet);
         Task<bool> DeleteFileSetAsync(int fileNumber);
         Task<bool> EmptyFileSetAsync(int fileNumber);
+        Task<List<FileSetName>> GetWritableFileSetsAsync(string operatorName);
+        Task<int> AddBorrowersToFileAsync(int fileNumber, List<int> borNos);
+        Task<int> RemoveBorrowersFromFileAsync(int fileNumber, List<int> borNos);
 
         // Catalog Reading Lists (General Catalog Files)
         Task<List<Lms.Data.Models.Decat.FileCatName>> GetGeneralCatalogFilesAsync();

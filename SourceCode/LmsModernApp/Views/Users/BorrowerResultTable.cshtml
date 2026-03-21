@@ -19,8 +19,26 @@
 <partial name="_DashboardHeader" />
 
 <div class="container-fluid mt-3">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="text-primary mb-0"><i class="bi bi-table me-2"></i>Borrower Search Results</h4>
+        <h4 class="text-primary mb-0">
+            <i class="bi bi-table me-2"></i>
+            @if (ViewBag.CurrentFileDesc != null)
+            {
+                <span>File: @ViewBag.CurrentFileDesc</span>
+            }
+            else
+            {
+                <span>Borrower Search Results</span>
+            }
+        </h4>
         <div>
             <span class="pagination-info me-3">Displaying @Model.Items.Count of @Model.TotalItems results</span>
             <a asp-action="Index" class="btn btn-outline-secondary btn-sm toolbar-btn"><i class="bi bi-box-arrow-left"></i> Exit</a>
@@ -34,20 +52,24 @@
                 <i class="bi bi-save"></i> Save
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#" onclick="saveMarked()">Save Marked to File...</a></li>
-                <li><a class="dropdown-item" href="#" onclick="saveAll()">Save All to File...</a></li>
+                <li><a class="dropdown-item" href="#" onclick="openSaveModal()">Save Marked to File...</a></li>
+                <li><a class="dropdown-item" href="#" onclick="openSaveAllModal()">Save All to File...</a></li>
             </ul>
         </div>
 
         <div class="btn-group me-2">
-            <button type="button" class="btn btn-outline-danger dropdown-toggle toolbar-btn" data-bs-toggle="dropdown">
-                <i class="bi bi-trash"></i> Remove
+            <button type="button" class="btn btn-outline-warning dropdown-toggle toolbar-btn" data-bs-toggle="dropdown">
+                <i class="bi bi-folder-minus"></i> Remove
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#" onclick="deleteMarked()">Delete Marked Borrowers</a></li>
-                <li><a class="dropdown-item" href="#" onclick="removeAll()">Remove All from List</a></li>
+                <li><a class="dropdown-item text-danger" href="#" onclick="openRemoveModal()">Remove Marked from File...</a></li>
+                <li><a class="dropdown-item text-danger" href="#" onclick="openRemoveAllModal()">Remove All from File...</a></li>
             </ul>
         </div>
+
+        <button type="button" class="btn btn-outline-danger toolbar-btn me-2" onclick="openDeleteMarkedModal()">
+            <i class="bi bi-trash"></i> Delete Marked
+        </button>
 
         <button type="button" class="btn btn-outline-secondary toolbar-btn me-2" onclick="printReport()">
             <i class="bi bi-printer"></i> Print/Report
@@ -142,6 +164,145 @@
     </div>
 </div>
 
+<!-- Remove All from File Confirmation Modal -->
+<div class="modal fade" id="removeAllFromFileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-trash-fill me-2"></i>Remove All from File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="RemoveAllFromFile" method="post" id="removeAllForm">
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-exclamation-circle text-warning" style="font-size: 3rem;"></i>
+                    <p class="mt-3">Are you sure you want to remove <strong>EVERY</strong> borrower from the file: <span class="fw-bold text-primary">@ViewBag.CurrentFileDesc</span>?</p>
+                    <input type="hidden" name="fileNumber" value="@ViewBag.CurrentFileNumber" />
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning fw-bold">Remove All Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Save All to File Modal -->
+<div class="modal fade" id="saveAllToFileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="bi bi-collection me-2"></i>Save All Results to File</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="SaveAllToFile" method="post" id="saveAllForm">
+                <div class="modal-body">
+                    <p>This will add <strong>all @Model.TotalItems matching borrowers</strong> from your current search to the selected file.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Destination File:</label>
+                        <select name="fileNumber" class="form-select" required>
+                            <option value="">-- Select File --</option>
+                            @if (ViewBag.WritableFileSets != null)
+                            {
+                                @foreach (var file in ViewBag.WritableFileSets)
+                                {
+                                    <option value="@file.FileNumber">@file.FileDesc</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info text-white"><i class="bi bi-check-all me-1"></i> Add All to File</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Marked Borrowers Modal -->
+<div class="modal fade" id="deleteMarkedModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-octagon me-2"></i>Permanent Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="DeleteMarked" method="post" id="deleteMarkedForm">
+                <div class="modal-body text-center py-4">
+                    <p class="mb-0">Are you sure you want to <strong>permanently delete</strong> the <span id="deleteCountLabel" class="fw-bold"></span> selected borrowers from the entire system?</p>
+                    <p class="text-danger small mt-2">Note: Borrowers with active loans will not be deleted.</p>
+                    <div id="deleteSelectedIdsContainer"></div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i> Yes, Delete Permanent</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Save to File Modal -->
+<div class="modal fade" id="saveToFileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-save me-2"></i>Save Marked to File</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="AddMarkedToFile" method="post" id="saveForm">
+                <div class="modal-body">
+                    <p id="saveCountLabel" class="fw-bold text-primary"></p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Destination File:</label>
+                        <select name="fileNumber" class="form-select" required>
+                            <option value="">-- Select File --</option>
+                            @if (ViewBag.WritableFileSets != null)
+                            {
+                                @foreach (var file in ViewBag.WritableFileSets)
+                                {
+                                    <option value="@file.FileNumber">@file.FileDesc</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div id="saveSelectedIdsContainer"></div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i> Add to File</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Remove from File Confirmation Modal -->
+<div class="modal fade" id="removeFromFileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Remove Marked from File</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="RemoveMarkedFromFile" method="post" id="removeForm">
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                    <p class="mt-3">Are you sure you want to remove the <span id="removeCountLabel" class="fw-bold"></span> selected borrowers from this file?</p>
+                    <input type="hidden" name="fileNumber" value="@ViewBag.CurrentFileNumber" />
+                    <div id="removeSelectedIdsContainer"></div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Remove Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         function updateSort(field, order) {
@@ -156,11 +317,92 @@
             window.location.href = '@Url.Action("Index")' + '?id=' + id;
         }
 
-        // Placeholders for batch actions
-        function saveMarked() { alert('Save Marked logic would go here'); }
-        function saveAll() { alert('Save All logic would go here'); }
-        function deleteMarked() { alert('Delete Marked logic would go here'); }
-        function removeAll() { alert('Remove All logic would go here'); }
+        function getSelectedIds() {
+            return Array.from(document.querySelectorAll('.bor-check:checked')).map(cb => cb.value);
+        }
+
+        function openSaveModal() {
+            const ids = getSelectedIds();
+            if (ids.length === 0) {
+                alert('Please select at least one borrower.');
+                return;
+            }
+            
+            document.getElementById('saveCountLabel').textContent = `You have selected ${ids.length} borrowers.`;
+            const container = document.getElementById('saveSelectedIdsContainer');
+            container.innerHTML = '';
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selectedBorrowerIds';
+                input.value = id;
+                container.appendChild(input);
+            });
+
+            new bootstrap.Modal(document.getElementById('saveToFileModal')).show();
+        }
+
+        function openSaveAllModal() {
+            new bootstrap.Modal(document.getElementById('saveAllToFileModal')).show();
+        }
+
+        function openRemoveAllModal() {
+            const currentFile = '@ViewBag.CurrentFileNumber';
+            if (!currentFile || currentFile === '') {
+                alert('You are not currently viewing a specific file list. This action is only available when viewing a file from the File List hub.');
+                return;
+            }
+            new bootstrap.Modal(document.getElementById('removeAllFromFileModal')).show();
+        }
+
+        function openRemoveModal() {
+            const ids = getSelectedIds();
+            const currentFile = '@ViewBag.CurrentFileNumber';
+            
+            if (!currentFile || currentFile === '') {
+                alert('You are not currently viewing a specific file list. This action is only available when viewing a file from the File List hub.');
+                return;
+            }
+            if (ids.length === 0) {
+                alert('Please select at least one borrower.');
+                return;
+            }
+
+            document.getElementById('removeCountLabel').textContent = ids.length;
+            const container = document.getElementById('removeSelectedIdsContainer');
+            container.innerHTML = '';
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selectedBorrowerIds';
+                input.value = id;
+                container.appendChild(input);
+            });
+
+            new bootstrap.Modal(document.getElementById('removeFromFileModal')).show();
+        }
+
+        function openDeleteMarkedModal() {
+            const ids = getSelectedIds();
+            if (ids.length === 0) {
+                alert('Please select at least one borrower.');
+                return;
+            }
+
+            document.getElementById('deleteCountLabel').textContent = ids.length;
+            const container = document.getElementById('deleteSelectedIdsContainer');
+            container.innerHTML = '';
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selectedBorrowerIds';
+                input.value = id;
+                container.appendChild(input);
+            });
+
+            new bootstrap.Modal(document.getElementById('deleteMarkedModal')).show();
+        }
+
         function printReport() { alert('Reporting logic would go here'); }
     </script>
 }

@@ -28,6 +28,8 @@ namespace LmsModernApp.Controllers
             if (id.HasValue)
             {
                 HttpContext.Session.SetInt32("SelectedBorrowerId", id.Value);
+                // Ensure the navigation list is ready if we just came from a search/file
+                await PrepareNavigationListAsync();
             }
 
             var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
@@ -41,6 +43,86 @@ namespace LmsModernApp.Controllers
             }
 
             return View(model);
+        }
+
+        private async Task PrepareNavigationListAsync()
+        {
+            // Only rebuild the list if we don't have one or if the search criteria changed
+            var criteriaJson = HttpContext.Session.GetString("SearchCriteria");
+            if (string.IsNullOrEmpty(criteriaJson)) return;
+
+            var existingNavJson = HttpContext.Session.GetString("NavigationIds");
+            if (!string.IsNullOrEmpty(existingNavJson)) return;
+
+            var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var criteria = System.Text.Json.JsonSerializer.Deserialize<BorrowerSearchCriteria>(criteriaJson, options);
+            if (criteria == null) return;
+
+            var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
+            var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op!);
+
+            // Fetch ALL IDs for this search (limited to 5000 for safety)
+            var results = await _borrowerRepository.SearchBorrowersAsync(
+                criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
+                criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
+                criteria.BorDobCondition, criteria.FileNumber, allowedGroups, 1, 5000, criteria.SortField ?? "BorSurname", criteria.SortOrder ?? "ASC");
+
+            var ids = results.Items.Select(i => i.Borrower.BorNo).ToList();
+            HttpContext.Session.SetString("NavigationIds", System.Text.Json.JsonSerializer.Serialize(ids));
+        }
+
+        public IActionResult First()
+        {
+            var idsJson = HttpContext.Session.GetString("NavigationIds");
+            if (!string.IsNullOrEmpty(idsJson))
+            {
+                var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(idsJson);
+                if (ids != null && ids.Any()) return RedirectToAction(nameof(Index), new { id = ids.First() });
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Last()
+        {
+            var idsJson = HttpContext.Session.GetString("NavigationIds");
+            if (!string.IsNullOrEmpty(idsJson))
+            {
+                var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(idsJson);
+                if (ids != null && ids.Any()) return RedirectToAction(nameof(Index), new { id = ids.Last() });
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Next()
+        {
+            var currentId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            var idsJson = HttpContext.Session.GetString("NavigationIds");
+            if (currentId.HasValue && !string.IsNullOrEmpty(idsJson))
+            {
+                var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(idsJson);
+                if (ids != null)
+                {
+                    var index = ids.IndexOf(currentId.Value);
+                    if (index >= 0 && index < ids.Count - 1) return RedirectToAction(nameof(Index), new { id = ids[index + 1] });
+                }
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Prev()
+        {
+            var currentId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            var idsJson = HttpContext.Session.GetString("NavigationIds");
+            if (currentId.HasValue && !string.IsNullOrEmpty(idsJson))
+            {
+                var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(idsJson);
+                if (ids != null)
+                {
+                    var index = ids.IndexOf(currentId.Value);
+                    if (index > 0) return RedirectToAction(nameof(Index), new { id = ids[index - 1] });
+                }
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
@@ -86,7 +168,7 @@ namespace LmsModernApp.Controllers
             }
 
             // Store criteria in session for the table view
-            TempData["SearchCriteria"] = System.Text.Json.JsonSerializer.Serialize(criteria);
+            HttpContext.Session.SetString("SearchCriteria", System.Text.Json.JsonSerializer.Serialize(criteria));
             
             return RedirectToAction(nameof(BorrowerResultTable));
         }
@@ -98,20 +180,142 @@ namespace LmsModernApp.Controllers
 
             var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
 
-            // Retrieve full criteria from TempData
-            var criteriaJson = TempData.Peek("SearchCriteria")?.ToString();
+            // 1. Retrieve criteria with Case-Insensitive options for reliability
+            var criteriaJson = HttpContext.Session.GetString("SearchCriteria");
+            var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var criteria = !string.IsNullOrEmpty(criteriaJson) 
-                ? System.Text.Json.JsonSerializer.Deserialize<BorrowerSearchCriteria>(criteriaJson)
+                ? System.Text.Json.JsonSerializer.Deserialize<BorrowerSearchCriteria>(criteriaJson, options)
                 : new BorrowerSearchCriteria();
 
             if (criteria == null) criteria = new BorrowerSearchCriteria();
 
+            // 2. Run Search
             Lms.Data.PagedResult<Lms.Data.BorrowerWithAddress> results = await _borrowerRepository.SearchBorrowersAsync(
                 criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
                 criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
                 criteria.BorDobCondition, criteria.FileNumber, allowedGroups, page, 20, sort, order);
 
+            // 3. Set Permissions (Persist via TempData for redirects)
+            if (criteria.FileNumber.HasValue && criteria.FileNumber > 0)
+            {
+                var fileSet = await _borrowerRepository.GetFileSetByNumberAsync(criteria.FileNumber.Value);
+                if (fileSet != null)
+                {
+                    ViewBag.CurrentFileDesc = fileSet.FileDesc;
+                    // Mirroring Legacy: Enable if FileNumber exists. 
+                    // (We can add specific profile checks here later)
+                    TempData["CanRemoveFromFile"] = true;
+                }
+            }
+            else
+            {
+                TempData["CanRemoveFromFile"] = false;
+            }
+
+            // Fetch writable file sets for the "Save to File" modal
+            ViewBag.WritableFileSets = await _borrowerRepository.GetWritableFileSetsAsync(op.OperName);
+            ViewBag.CurrentFileNumber = criteria.FileNumber;
+
             return View(results);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddMarkedToFile(int fileNumber, List<int> selectedBorrowerIds)
+        {
+            if (fileNumber > 0 && selectedBorrowerIds != null && selectedBorrowerIds.Any())
+            {
+                var count = await _borrowerRepository.AddBorrowersToFileAsync(fileNumber, selectedBorrowerIds);
+                TempData["SuccessMessage"] = $"Successfully added {count} borrowers to the file.";
+            }
+            return RedirectToAction(nameof(BorrowerResultTable));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteMarked(List<int> selectedBorrowerIds)
+        {
+            if (selectedBorrowerIds != null && selectedBorrowerIds.Any())
+            {
+                int successCount = 0;
+                int failCount = 0;
+                foreach (var id in selectedBorrowerIds)
+                {
+                    var success = await _borrowerRepository.DeleteBorrowerAsync(id);
+                    if (success) successCount++;
+                    else failCount++;
+                }
+
+                if (failCount == 0) TempData["SuccessMessage"] = $"Successfully deleted {successCount} borrowers.";
+                else TempData["ErrorMessage"] = $"Deleted {successCount} borrowers. {failCount} could not be deleted (likely due to active loans).";
+            }
+            return RedirectToAction(nameof(BorrowerResultTable));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveAllToFile(int fileNumber)
+        {
+            if (fileNumber > 0)
+            {
+                var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
+                if (op == null) return Unauthorized();
+                var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
+
+                // Re-run the search WITHOUT paging to get every ID
+                var criteriaJson = HttpContext.Session.GetString("SearchCriteria");
+                var criteria = !string.IsNullOrEmpty(criteriaJson) 
+                    ? System.Text.Json.JsonSerializer.Deserialize<BorrowerSearchCriteria>(criteriaJson)
+                    : new BorrowerSearchCriteria();
+
+                if (criteria == null) criteria = new BorrowerSearchCriteria();
+
+                // Fetch ALL matching items (using a large page size)
+                var allResults = await _borrowerRepository.SearchBorrowersAsync(
+                    criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
+                    criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
+                    criteria.BorDobCondition, criteria.FileNumber, allowedGroups, 1, 10000, "BorSurname", "ASC");
+
+                var allIds = allResults.Items.Select(i => i.Borrower.BorNo).ToList();
+                if (allIds.Any())
+                {
+                    var count = await _borrowerRepository.AddBorrowersToFileAsync(fileNumber, allIds);
+                    TempData["SuccessMessage"] = $"Successfully added all {count} matching borrowers to the file.";
+                }
+            }
+            return RedirectToAction(nameof(BorrowerResultTable));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveMarkedFromFile(int fileNumber, List<int> selectedBorrowerIds)
+        {
+            if (fileNumber > 0 && selectedBorrowerIds != null && selectedBorrowerIds.Any())
+            {
+                var count = await _borrowerRepository.RemoveBorrowersFromFileAsync(fileNumber, selectedBorrowerIds);
+                TempData["SuccessMessage"] = $"Successfully removed {count} borrowers from the file.";
+            }
+            return RedirectToAction(nameof(BorrowerResultTable));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveAllFromFile(int fileNumber)
+        {
+            if (fileNumber > 0)
+            {
+                // We reuse the search logic to get all IDs currently in this file
+                var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
+                if (op == null) return Unauthorized();
+                var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
+
+                var results = await _borrowerRepository.SearchBorrowersAsync(
+                    null, null, null, null, null, null, null, null, null, null, null, 
+                    fileNumber, allowedGroups, 1, 10000, "BorSurname", "ASC");
+
+                var allIds = results.Items.Select(i => i.Borrower.BorNo).ToList();
+                if (allIds.Any())
+                {
+                    var count = await _borrowerRepository.RemoveBorrowersFromFileAsync(fileNumber, allIds);
+                    TempData["SuccessMessage"] = $"Successfully removed all {count} borrowers from the file.";
+                }
+            }
+            return RedirectToAction(nameof(BorrowerResultTable));
         }
 
         [HttpPost]
@@ -256,23 +460,32 @@ namespace LmsModernApp.Controllers
                 FileNumber = id
             };
             
-            TempData["SearchCriteria"] = System.Text.Json.JsonSerializer.Serialize(criteria);
+            HttpContext.Session.SetString("SearchCriteria", System.Text.Json.JsonSerializer.Serialize(criteria));
             
             return RedirectToAction(nameof(BorrowerResultTable));
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveReadingListLinks(int borrowerFileNumber, List<int> selectedCatFileNumbers, List<DateTime> expiryDates)
+        public async Task<IActionResult> SaveReadingListLinks(int borrowerFileNumber, List<int> selectedCatFileNumbers)
         {
             var links = new List<AFileSetLibCat>();
             if (selectedCatFileNumbers != null)
             {
-                for (int i = 0; i < selectedCatFileNumbers.Count; i++)
+                foreach (var catNo in selectedCatFileNumbers)
                 {
+                    // Manually fetch the specific date for this ID from the form
+                    var dateStr = Request.Form[$"expiryDate_{catNo}"].ToString();
+                    DateTime expiryDate = DateTime.MaxValue; // Default if not provided
+                    
+                    if (DateTime.TryParse(dateStr, out var parsedDate))
+                    {
+                        expiryDate = parsedDate;
+                    }
+
                     links.Add(new AFileSetLibCat
                     {
-                        FileNumberCat = selectedCatFileNumbers[i],
-                        ExpirationDate = expiryDates[i],
+                        FileNumberCat = catNo,
+                        ExpirationDate = expiryDate,
                         LastModifyBy = User.Identity?.Name ?? "SYSTEM",
                         LastModifyOn = DateTime.Now
                     });

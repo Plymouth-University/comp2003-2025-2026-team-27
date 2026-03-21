@@ -170,7 +170,7 @@
                                 <select asp-for="SelectedFileSet.FileOperAccess" class="form-select form-select-sm">
                                     <option value="N">Only Me (NONE)</option>
                                     <option value="A">Allow Others (FULL)</option>
-                                    <option value="G">Global (GLOBAL)</option>
+                                    <option value="GLOBAL">Global (GLOBAL)</option>
                                 </select>
                             </div>
                         </form>
@@ -208,7 +208,7 @@
                                                 @cat.FileDesc
                                             </td>
                                             <td>
-                                                <input type="date" name="expiryDates" class="form-control form-control-sm h-auto py-0" 
+                                                <input type="date" name="expiryDate_@cat.FileNumber" class="form-control form-control-sm h-auto py-0" 
                                                        value='@(isSelected ? link.ExpirationDate.ToString("yyyy-MM-dd") : "")' />
                                             </td>
                                         </tr>
