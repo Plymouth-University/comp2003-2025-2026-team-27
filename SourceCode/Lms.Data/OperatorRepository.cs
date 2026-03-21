@@ -74,5 +74,12 @@ namespace Lms.Data
 
             return allowedGroups.Distinct().ToList();
         }
+
+        public async Task<List<Operator>> GetAllOperatorsAsync()
+        {
+            return await _context.Operators
+                .OrderBy(o => o.OperName)
+                .ToListAsync();
+        }
     }
 }

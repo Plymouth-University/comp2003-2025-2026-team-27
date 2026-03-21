@@ -8,5 +8,6 @@ namespace Lms.Data
         Task<Operator?> GetOperatorByNameAsync(string username);
         Task<List<LibLocation>> GetAllowedLocationsAsync(Operator op);
         Task<List<string>> GetAllowedGroupsAsync(Operator op);
+        Task<List<Operator>> GetAllOperatorsAsync();
     }
 }
