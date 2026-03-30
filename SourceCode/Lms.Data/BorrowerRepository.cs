@@ -36,7 +36,6 @@ namespace Lms.Data
         {
             if (borrower.BorNo == 0)
             {
-                // Fetch and increment BorNo from BoSystab
                 var systab = await _delib.BoSystabs.FirstOrDefaultAsync();
                 if (systab == null)
                 {
@@ -47,18 +46,18 @@ namespace Lms.Data
                 {
                     systab.BorNo = (systab.BorNo ?? 0) + 1;
                 }
-                
+
                 borrower.BorNo = systab.BorNo ?? 1;
                 _delib.Borrowers.Add(borrower);
             }
             else
             {
-                // Update existing
                 var existing = await _delib.Borrowers.FindAsync(borrower.BorNo);
                 if (existing == null) return false;
 
                 _delib.Entry(existing).CurrentValues.SetValues(borrower);
             }
+
             return await _delib.SaveChangesAsync() > 0;
         }
 
@@ -67,7 +66,6 @@ namespace Lms.Data
             var borrower = await _delib.Borrowers.FindAsync(id);
             if (borrower == null) return false;
 
-            // Legacy Check: Borrowers with active loans cannot be deleted
             if (!string.IsNullOrEmpty(borrower.BorBarNo))
             {
                 var hasLoans = await _delib.StkItems.AnyAsync(s => s.StkBorBarNo == borrower.BorBarNo);
@@ -81,91 +79,89 @@ namespace Lms.Data
         public async Task<List<LookupItem>> GetBorrowerTypesAsync()
         {
             return await _delocal.BorTypes
-                .OrderBy(t => t.OrderId)
-                .Select(t => new LookupItem { Code = t.BtType, Name = t.BtName ?? t.BtType })
-                .ToListAsync();
+            .OrderBy(t => t.OrderId)
+            .Select(t => new LookupItem { Code = t.BtType, Name = t.BtName ?? t.BtType })
+            .ToListAsync();
         }
 
         public async Task<List<LookupItem>> GetBorrowerGroupsAsync()
         {
             return await _delocal.BorGroups
-                .OrderBy(g => g.OrderId)
-                .Select(g => new LookupItem { Code = g.BgGroup, Name = g.BgName ?? g.BgGroup })
-                .ToListAsync();
+            .OrderBy(g => g.OrderId)
+            .Select(g => new LookupItem { Code = g.BgGroup, Name = g.BgName ?? g.BgGroup })
+            .ToListAsync();
         }
 
         public async Task<List<LookupItem>> GetBorrowerClassesAsync()
         {
             return await _delocal.BorClasses
-                .OrderBy(c => c.OrderId)
-                .Select(c => new LookupItem { Code = c.BcClass, Name = c.BcName ?? c.BcClass })
-                .ToListAsync();
+            .OrderBy(c => c.OrderId)
+            .Select(c => new LookupItem { Code = c.BcClass, Name = c.BcName ?? c.BcClass })
+            .ToListAsync();
         }
 
         public async Task<List<LookupItem>> GetBorrowerStatusesAsync()
         {
             return await _delocal.BorStatuses
-                .OrderBy(s => s.OrderId)
-                .Select(s => new LookupItem { Code = s.BsType, Name = s.BsName ?? s.BsType })
-                .ToListAsync();
+            .OrderBy(s => s.OrderId)
+            .Select(s => new LookupItem { Code = s.BsType, Name = s.BsName ?? s.BsType })
+            .ToListAsync();
         }
 
         public async Task<List<LookupItem>> GetLocationsAsync()
         {
             return await _delocal.LibLocations
-                .Select(l => new LookupItem { Code = l.LlCode, Name = l.LlName ?? l.LlCode })
-                .ToListAsync();
+            .Select(l => new LookupItem { Code = l.LlCode, Name = l.LlName ?? l.LlCode })
+            .ToListAsync();
         }
 
         public async Task<List<LookupItem>> GetTitlesAsync()
         {
             return await _delocal.BorTitles
-                .OrderBy(t => t.OrderId)
-                .Select(t => new LookupItem { Code = t.BtTitle, Name = t.BtTitle })
-                .ToListAsync();
+            .OrderBy(t => t.OrderId)
+            .Select(t => new LookupItem { Code = t.BtTitle, Name = t.BtTitle })
+            .ToListAsync();
         }
 
         public async Task<List<LookupItem>> GetAreasAsync()
         {
             return await _delocal.Areas
-                .OrderBy(a => a.OrderId)
-                .Select(a => new LookupItem { Code = a.AreaCode, Name = a.AreaName ?? a.AreaCode })
-                .ToListAsync();
+            .OrderBy(a => a.OrderId)
+            .Select(a => new LookupItem { Code = a.AreaCode, Name = a.AreaName ?? a.AreaCode })
+            .ToListAsync();
         }
 
         public async Task<List<LookupItem>> GetWardsAsync()
         {
             return await _delocal.Wards
-                .OrderBy(w => w.OrderId)
-                .Select(w => new LookupItem { Code = w.WardCode, Name = w.WardName ?? w.WardCode })
-                .ToListAsync();
+            .OrderBy(w => w.OrderId)
+            .Select(w => new LookupItem { Code = w.WardCode, Name = w.WardName ?? w.WardCode })
+            .ToListAsync();
         }
 
-        // --- File Set Management ---
         private const string FILE_TYPE_BORROWER = "B";
         private const string ACCESS_GLOBAL = "GLOBAL";
 
         public async Task<List<FileSetName>> GetFileSetsByOperatorAsync(string operatorName, int page, int pageSize)
         {
             return await _delib.FileSetNames
-                .Where(f => f.FileNumber > 0 && f.FileType == FILE_TYPE_BORROWER && f.FileOper == operatorName && f.FileOperAccess != ACCESS_GLOBAL)
-                .OrderBy(f => f.FileDesc)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            .Where(f => f.FileNumber > 0 && f.FileType == FILE_TYPE_BORROWER && f.FileOper == operatorName && f.FileOperAccess != ACCESS_GLOBAL)
+            .OrderBy(f => f.FileDesc)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
         }
 
         public async Task<PagedResult<FileSetName>> GetFileSetsByCreatorAsync(
-            string creatorName, 
-            int page, 
-            int pageSize, 
-            string sortBy = "FileDesc", 
-            string sortOrder = "ASC",
-            string? searchTerm = null)
+        string creatorName,
+        int page,
+        int pageSize,
+        string sortBy = "FileDesc",
+        string sortOrder = "ASC",
+        string? searchTerm = null)
         {
             var query = _delib.FileSetNames.Where(f => f.FileNumber > 0 && f.FileType == FILE_TYPE_BORROWER);
 
-            // 1. Filter by Creator
             if (creatorName == "SYSGLOBALFILES")
             {
                 query = query.Where(f => f.FileOperAccess == ACCESS_GLOBAL);
@@ -175,16 +171,13 @@ namespace Lms.Data
                 query = query.Where(f => f.FileOper == creatorName && f.FileOperAccess != ACCESS_GLOBAL);
             }
 
-            // 2. Search
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 query = query.Where(f => f.FileDesc != null && f.FileDesc.Contains(searchTerm.Trim()));
             }
 
-            // 3. Count
             var totalItems = await query.CountAsync();
 
-            // 4. Dynamic Sorting
             bool isDesc = sortOrder?.ToUpper() == "DESC";
             query = sortBy switch
             {
@@ -193,11 +186,10 @@ namespace Lms.Data
                 _ => isDesc ? query.OrderByDescending(f => f.FileDesc) : query.OrderBy(f => f.FileDesc)
             };
 
-            // 5. Paginate
             var items = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
             return new PagedResult<FileSetName>
             {
@@ -211,8 +203,8 @@ namespace Lms.Data
         public async Task<int> GetFileSetsCountByOperatorAsync(string operatorName)
         {
             return await _delib.FileSetNames
-                .Where(f => f.FileNumber > 0 && f.FileType == FILE_TYPE_BORROWER && f.FileOper == operatorName && f.FileOperAccess != ACCESS_GLOBAL)
-                .CountAsync();
+            .Where(f => f.FileNumber > 0 && f.FileType == FILE_TYPE_BORROWER && f.FileOper == operatorName && f.FileOperAccess != ACCESS_GLOBAL)
+            .CountAsync();
         }
 
         public async Task<FileSetName?> GetFileSetByNumberAsync(int fileNumber)
@@ -224,16 +216,18 @@ namespace Lms.Data
         {
             if (fileSet.FileNumber == null || fileSet.FileNumber == 0)
             {
-                // New record - Fetch next FileNumber from Systab
                 var systab = await _delib.FileSetSystabs.FirstOrDefaultAsync();
                 int nextNo = (systab?.FileNumber ?? 0) + 1;
-                
-                if (systab == null) {
+
+                if (systab == null)
+                {
                     _delib.FileSetSystabs.Add(new FileSetSystab { FileNumber = nextNo });
-                } else {
+                }
+                else
+                {
                     systab.FileNumber = nextNo;
                 }
-                
+
                 fileSet.FileNumber = nextNo;
                 fileSet.FileDate = DateTime.Now;
                 _delib.FileSetNames.Add(fileSet);
@@ -241,7 +235,6 @@ namespace Lms.Data
             }
             else
             {
-                // Keyless update using raw SQL
                 var sql = "UPDATE FILE_SET_NAMES SET FILE_DESC = {0}, FILE_OPER_ACCESS = {1} WHERE FILE_NUMBER = {2}";
                 var rows = await _delib.Database.ExecuteSqlRawAsync(sql, fileSet.FileDesc ?? "", fileSet.FileOperAccess ?? "", fileSet.FileNumber);
                 return rows > 0;
@@ -250,14 +243,11 @@ namespace Lms.Data
 
         public async Task<bool> DeleteFileSetAsync(int fileNumber)
         {
-            // Delete reading list links first
             var links = await _delib.AFileSetLibCats.Where(l => l.FileNumberLib == fileNumber).ToListAsync();
             _delib.AFileSetLibCats.RemoveRange(links);
 
-            // Delete members
             await EmptyFileSetAsync(fileNumber);
-            
-            // Delete header
+
             var sql = "DELETE FROM FILE_SET_NAMES WHERE FILE_NUMBER = {0}";
             var rows = await _delib.Database.ExecuteSqlRawAsync(sql, fileNumber);
             return rows > 0;
@@ -267,38 +257,34 @@ namespace Lms.Data
         {
             var sql = "DELETE FROM FILE_SET_DATA WHERE FILE_NUMBER = {0}";
             await _delib.Database.ExecuteSqlRawAsync(sql, fileNumber);
-            
-            // Update quantity in header to 0
+
             var sqlHeader = "UPDATE FILE_SET_NAMES SET FILE_QTY = 0 WHERE FILE_NUMBER = {0}";
             await _delib.Database.ExecuteSqlRawAsync(sqlHeader, fileNumber);
-            
+
             return true;
         }
 
         public async Task<List<FileSetName>> GetWritableFileSetsAsync(string operatorName)
         {
-            // Can write if Owner OR access is FULL ('A') OR GLOBAL ('GLOBAL')
             return await _delib.FileSetNames
-                .Where(f => f.FileNumber > 0 && f.FileType == FILE_TYPE_BORROWER && 
-                           (f.FileOper == operatorName || f.FileOperAccess == "A" || f.FileOperAccess == ACCESS_GLOBAL))
-                .OrderBy(f => f.FileDesc)
-                .ToListAsync();
+            .Where(f => f.FileNumber > 0 && f.FileType == FILE_TYPE_BORROWER &&
+            (f.FileOper == operatorName || f.FileOperAccess == "A" || f.FileOperAccess == ACCESS_GLOBAL))
+            .OrderBy(f => f.FileDesc)
+            .ToListAsync();
         }
 
         public async Task<int> AddBorrowersToFileAsync(int fileNumber, List<int> borNos)
         {
             if (borNos == null || borNos.Count == 0) return 0;
 
-            // 1. Filter out already existing links
             var existingBorNos = await _delib.FileSetData
-                .Where(f => f.FileNumber == fileNumber && borNos.Contains(f.FileNitem ?? 0))
-                .Select(f => f.FileNitem ?? 0)
-                .ToListAsync();
+            .Where(f => f.FileNumber == fileNumber && borNos.Contains(f.FileNitem ?? 0))
+            .Select(f => f.FileNitem ?? 0)
+            .ToListAsync();
 
             var newBorNos = borNos.Except(existingBorNos).ToList();
             if (newBorNos.Count == 0) return 0;
 
-            // 2. Batch insert using raw SQL (efficient)
             int rowsAffected = 0;
             foreach (var borNo in newBorNos)
             {
@@ -306,7 +292,6 @@ namespace Lms.Data
                 rowsAffected += await _delib.Database.ExecuteSqlRawAsync(sql, fileNumber, borNo);
             }
 
-            // 3. Update quantity in header
             if (rowsAffected > 0)
             {
                 var updateSql = "UPDATE FILE_SET_NAMES SET FILE_QTY = (SELECT COUNT(*) FROM FILE_SET_DATA WHERE FILE_NUMBER = {0}) WHERE FILE_NUMBER = {0}";
@@ -320,22 +305,18 @@ namespace Lms.Data
         {
             if (borNos == null || borNos.Count == 0) return 0;
 
-            // Get the barcodes for these IDs to ensure we can remove legacy records too
             var barcodes = await _delib.Borrowers
-                .Where(b => borNos.Contains(b.BorNo))
-                .Select(b => b.BorBarNo)
-                .Where(b => b != null)
-                .ToListAsync();
+            .Where(b => borNos.Contains(b.BorNo))
+            .Select(b => b.BorBarNo)
+            .Where(b => b != null)
+            .ToListAsync();
 
-            // Build a flexible delete query that matches on ID OR Barcode
-            // We use parameters for safety
             var borNosList = string.Join(",", borNos);
             var barcodesList = barcodes.Count > 0 ? "'" + string.Join("','", barcodes) + "'" : "''";
 
             var sql = $"DELETE FROM FILE_SET_DATA WHERE FILE_NUMBER = {{0}} AND (FILE_NITEM IN ({borNosList}) OR FILE_ITEM IN ({barcodesList}))";
             int rowsAffected = await _delib.Database.ExecuteSqlRawAsync(sql, fileNumber);
 
-            // Update quantity in header
             if (rowsAffected > 0)
             {
                 var updateSql = "UPDATE FILE_SET_NAMES SET FILE_QTY = (SELECT COUNT(*) FROM FILE_SET_DATA WHERE FILE_NUMBER = {0}) WHERE FILE_NUMBER = {0}";
@@ -348,27 +329,25 @@ namespace Lms.Data
         public async Task<List<Lms.Data.Models.Decat.FileCatName>> GetGeneralCatalogFilesAsync()
         {
             return await _decat.FileCatNames
-                .Where(f => f.ListType == "G")
-                .OrderBy(f => f.FileDesc)
-                .ToListAsync();
+            .Where(f => f.ListType == "G")
+            .OrderBy(f => f.FileDesc)
+            .ToListAsync();
         }
 
         public async Task<List<AFileSetLibCat>> GetRelatedReadingListsAsync(int borrowerFileNumber)
         {
             return await _delib.AFileSetLibCats
-                .Where(l => l.FileNumberLib == borrowerFileNumber)
-                .ToListAsync();
+            .Where(l => l.FileNumberLib == borrowerFileNumber)
+            .ToListAsync();
         }
 
         public async Task<bool> SaveRelatedReadingListsAsync(int borrowerFileNumber, List<AFileSetLibCat> links)
         {
-            // Remove existing links
             var existing = await _delib.AFileSetLibCats
-                .Where(l => l.FileNumberLib == borrowerFileNumber)
-                .ToListAsync();
+            .Where(l => l.FileNumberLib == borrowerFileNumber)
+            .ToListAsync();
             _delib.AFileSetLibCats.RemoveRange(existing);
 
-            // Add new links
             if (links != null && links.Count > 0)
             {
                 foreach (var link in links)
@@ -381,39 +360,101 @@ namespace Lms.Data
             return await _delib.SaveChangesAsync() > 0;
         }
 
+        public async Task<List<ReadingListItem>> GetBorrowerReadingListAsync(string borrowerBarcode)
+        {
+            if (string.IsNullOrWhiteSpace(borrowerBarcode))
+                return new List<ReadingListItem>();
+
+            var borrowerLists = await _delib.ABorReadingLists
+            .Where(bl => bl.BorBarNo == borrowerBarcode && (bl.DeleteFlag == null || bl.DeleteFlag != "Y"))
+            .Select(bl => new
+            {
+                bl.ListId,
+                bl.ListName,
+                bl.BorBarNo
+            })
+            .ToListAsync();
+
+            if (!borrowerLists.Any())
+                return new List<ReadingListItem>();
+
+            var listIds = borrowerLists.Select(x => x.ListId).ToList();
+
+            var catLinks = await _delib.ACatReadingLists
+            .Where(cl => listIds.Contains(cl.ListId))
+            .Select(cl => new
+            {
+                cl.ListId,
+                cl.CatNo,
+                cl.Priority
+            })
+            .ToListAsync();
+
+            if (!catLinks.Any())
+                return new List<ReadingListItem>();
+
+            var catNos = catLinks
+            .Select(x => x.CatNo)
+            .Distinct()
+            .ToList();
+
+            var catalogues = await _decat.Catalogues
+            .Where(c => catNos.Contains(c.CatNo))
+            .Select(c => new
+            {
+                c.CatNo,
+                c.CatStr1,
+                c.CatStr2,
+                c.CatStr3
+            })
+            .ToListAsync();
+
+            var items = (from bl in borrowerLists
+                         join cl in catLinks on bl.ListId equals cl.ListId
+                         join c in catalogues on cl.CatNo equals c.CatNo
+                         orderby cl.Priority, c.CatStr2
+                         select new ReadingListItem
+                         {
+                             BorrowerBarcode = bl.BorBarNo ?? string.Empty,
+                             ListName = bl.ListName ?? string.Empty,
+                             CatNo = c.CatNo,
+                             Priority = cl.Priority,
+                             Title = c.CatStr2 ?? string.Empty,
+                             Author = c.CatStr1 ?? string.Empty,
+                             Publication = c.CatStr3 ?? string.Empty
+                         })
+            .ToList();
+
+            return items;
+        }
         public async Task<BorAddr?> GetMainAddressAsync(int borNo)
         {
             return await _delib.BorAddrs.FirstOrDefaultAsync(a => a.BaBorNo == borNo && a.BaMain == true);
         }
 
-        // --- Search ---
-
         public async Task<PagedResult<BorrowerWithAddress>> SearchBorrowersAsync(
-            string? barcode,
-            string? surname,
-            string? givenName,
-            string? type,
-            string? group,
-            string? className,
-            string? status,
-            string? location,
-            string? sex,
-            DateTime? dob,
-            string? dobCondition,
-            int? fileNumber,
-            List<string> allowedGroups,
-            int page,
-            int pageSize,
-            string sortField,
-            string sortOrder)
+        string? barcode,
+        string? surname,
+        string? givenName,
+        string? type,
+        string? group,
+        string? className,
+        string? status,
+        string? location,
+        string? sex,
+        DateTime? dob,
+        string? dobCondition,
+        int? fileNumber,
+        List<string> allowedGroups,
+        int page,
+        int pageSize,
+        string sortField,
+        string sortOrder)
         {
             var query = _delib.Borrowers.AsQueryable();
 
-            // 0. File List Filter: Join with FILE_SET_DATA if fileNumber is provided
             if (fileNumber.HasValue)
             {
-                // Improved Join: Check both FileNitem (ID) and FileItem (Barcode) for maximum compatibility
-                // Order by FileSequence as per legacy logic
                 query = from b in query
                         join f in _delib.FileSetData on fileNumber.Value equals f.FileNumber
                         where b.BorNo == f.FileNitem || (b.BorBarNo != null && b.BorBarNo == f.FileItem)
@@ -421,13 +462,11 @@ namespace Lms.Data
                         select b;
             }
 
-            // 1. Security Filter: BOR_LIB_GROUP must be in allowedGroups
             if (allowedGroups != null && allowedGroups.Any())
             {
                 query = query.Where(b => b.BorLibGroup != null && allowedGroups.Contains(b.BorLibGroup));
             }
 
-            // 2. Dynamic Filtering
             if (!string.IsNullOrWhiteSpace(barcode))
                 query = query.Where(b => b.BorBarNo == barcode.Trim());
 
@@ -466,10 +505,8 @@ namespace Lms.Data
                 };
             }
 
-            // 3. Counting Total Results
             var totalItems = await query.CountAsync();
 
-            // 4. Dynamic Sorting
             bool isDesc = sortOrder?.ToUpper() == "DESC";
             query = sortField switch
             {
@@ -482,36 +519,34 @@ namespace Lms.Data
                 _ => isDesc ? query.OrderByDescending(b => b.BorSurname) : query.OrderBy(b => b.BorSurname)
             };
 
-            // 5. Join with Address, calculate live loans, and Paginate
             var results = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .GroupJoin(
-                    _delib.BorAddrs.Where(a => a.BaMain == true),
-                    b => b.BorNo,
-                    a => a.BaBorNo,
-                    (b, addresses) => new { Borrower = b, MainAddress = addresses.FirstOrDefault() }
-                )
-                .ToListAsync();
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .GroupJoin(
+            _delib.BorAddrs.Where(a => a.BaMain == true),
+            b => b.BorNo,
+            a => a.BaBorNo,
+            (b, addresses) => new { Borrower = b, MainAddress = addresses.FirstOrDefault() }
+            )
+            .ToListAsync();
 
-            // Get live loan counts for these barcodes
             var barcodes = results.Select(r => r.Borrower.BorBarNo).Where(b => b != null).ToList();
             var liveLoanCounts = await _delib.StkItems
-                .Where(s => s.StkBorBarNo != null && barcodes.Contains(s.StkBorBarNo))
-                .GroupBy(s => s.StkBorBarNo)
-                .Select(g => new { Barcode = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.Barcode!, x => x.Count);
+            .Where(s => s.StkBorBarNo != null && barcodes.Contains(s.StkBorBarNo))
+            .GroupBy(s => s.StkBorBarNo)
+            .Select(g => new { Barcode = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Barcode!, x => x.Count);
 
-            var finalItems = results.Select(r => {
+            var finalItems = results.Select(r =>
+            {
                 var item = new BorrowerWithAddress
                 {
                     Borrower = r.Borrower,
                     FormattedAddress = r.MainAddress != null
-                        ? string.Join(", ", new[] { r.MainAddress.BaAddr1, r.MainAddress.BaAddr2, r.MainAddress.BaSuburbCd }.Where(s => !string.IsNullOrWhiteSpace(s)))
-                        : r.Borrower.BorAddr1Txt
+                ? string.Join(", ", new[] { r.MainAddress.BaAddr1, r.MainAddress.BaAddr2, r.MainAddress.BaSuburbCd }.Where(s => !string.IsNullOrWhiteSpace(s)))
+                : r.Borrower.BorAddr1Txt
                 };
-                
-                // Override static loan count with live one
+
                 if (r.Borrower.BorBarNo != null && liveLoanCounts.TryGetValue(r.Borrower.BorBarNo, out int count))
                 {
                     item.Borrower.BorNoLoans = count;
@@ -534,3 +569,4 @@ namespace Lms.Data
         }
     }
 }
+
