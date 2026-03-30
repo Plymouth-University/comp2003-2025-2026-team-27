@@ -394,7 +394,7 @@ namespace Lms.Data
                 return new List<ReadingListItem>();
 
             var catNos = catLinks
-            .Select(x => x.CatNo)
+            .Select(x => (int?)x.CatNo)
             .Distinct()
             .ToList();
 
