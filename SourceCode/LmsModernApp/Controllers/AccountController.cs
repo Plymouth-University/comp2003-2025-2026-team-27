@@ -66,7 +66,7 @@ namespace LmsModernApp.Controllers
                     {
                         return Redirect(model.ReturnUrl);
                     }
-                    return RedirectToAction("Index", "Dashboard");
+                    return RedirectToAction("Home", "Home");
                 }
                 else if (allowedLocations.Count > 1)
                 {
@@ -141,7 +141,7 @@ namespace LmsModernApp.Controllers
                 {
                     return Redirect(returnUrl);
                 }
-                return RedirectToAction("Index", "Dashboard");
+                return RedirectToAction("Home", "Home");
             }
 
             ModelState.AddModelError(string.Empty, "Please select a valid location.");

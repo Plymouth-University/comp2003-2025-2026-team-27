@@ -381,11 +381,6 @@ namespace Lms.Data
             return await _delib.SaveChangesAsync() > 0;
         }
 
-        public async Task<BorAddr?> GetMainAddressAsync(int borNo)
-        {
-            return await _delib.BorAddrs.FirstOrDefaultAsync(a => a.BaBorNo == borNo && a.BaMain == true);
-        }
-
         // --- Search ---
 
         public async Task<PagedResult<BorrowerWithAddress>> SearchBorrowersAsync(
@@ -531,6 +526,126 @@ namespace Lms.Data
                 Page = page,
                 PageSize = pageSize
             };
+        }
+
+        public async Task<BorAddr?> GetMainAddressAsync(int borNo)
+        {
+            return await _delib.BorAddrs
+                .FirstOrDefaultAsync(a => a.BaBorNo == borNo && (a.BaMain == true || a.BaMailing == true));
+        }
+
+        public async Task<List<BorAddr>> GetBorrowerAddressesAsync(int borNo)
+        {
+            return await _delib.BorAddrs
+                .Where(a => a.BaBorNo == borNo)
+                .OrderByDescending(a => a.BaMain == true || a.BaMailing == true)
+                .ThenBy(a => a.BaAddrNo)
+                .ToListAsync();
+        }
+
+        public async Task<List<ABorAddressType>> GetAddressTypesAsync()
+        {
+            var dbTypes = await _delib.ABorAddressTypes.ToListAsync();
+            
+            // Following old system logic: 0: Correspondence, 1: Residential, 2: Guardian, 3: Guardian, 4: Order Delivery
+            // With dynamic renaming via INST_BOR_ADDR1, 2, 3
+            
+            var label1 = await GetLabelTextAsync("INST_BOR_ADDR1") ?? "Correspondence";
+            var label2 = await GetLabelTextAsync("INST_BOR_ADDR2") ?? "Residential";
+            var label3 = await GetLabelTextAsync("INST_BOR_ADDR3") ?? "Guardian";
+
+            var defaultTypes = new List<ABorAddressType>
+            {
+                new ABorAddressType { AddressTypeId = 0, AdddressTypeDescription = label1 },
+                new ABorAddressType { AddressTypeId = 1, AdddressTypeDescription = label2 },
+                new ABorAddressType { AddressTypeId = 2, AdddressTypeDescription = label3 },
+                new ABorAddressType { AddressTypeId = 3, AdddressTypeDescription = "Guardian" },
+                new ABorAddressType { AddressTypeId = 4, AdddressTypeDescription = "Order Delivery" }
+            };
+
+            // Merge: keep DB types, add defaults for 0-4 if they don't exist in DB
+            // SPECIAL: if ID 2 and ID 3 both result in "Guardian", skip ID 3 to avoid duplicates
+            foreach (var def in defaultTypes)
+            {
+                if (!dbTypes.Any(t => t.AddressTypeId == def.AddressTypeId))
+                {
+                    // Deduplicate by name for the generic ones
+                    if (!dbTypes.Any(t => t.AdddressTypeDescription.Equals(def.AdddressTypeDescription, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        dbTypes.Add(def);
+                    }
+                }
+            }
+
+            return dbTypes.OrderBy(t => t.AddressTypeId).ToList();
+        }
+
+        private async Task<string?> GetLabelTextAsync(string labelName)
+        {
+            // The old system might use different screen names, but we search by LabelName across all screens if needed
+            // or specific screen if known. Let's try finding it by LabelName.
+            var label = await _delocal.Ans247libLabels
+                .FirstOrDefaultAsync(l => l.LabelName == labelName);
+            
+            return label?.LabelText;
+        }
+
+        public async Task<List<Lms.Data.Models.Delocal.Suburb>> GetSuburbsAsync()
+        {
+            return await _delocal.Suburbs
+                .OrderBy(s => s.OrderId)
+                .ThenBy(s => s.SuburbName)
+                .ToListAsync();
+        }
+
+        public async Task<bool> SaveAddressAsync(BorAddr address)
+        {
+            if (address.BaAddrNo == 0)
+            {
+                // New address - get next BaAddrNo from BoSystab
+                var systab = await _delib.BoSystabs.FirstOrDefaultAsync();
+                int nextId;
+                if (systab == null)
+                {
+                    systab = new BoSystab { BorNo = 1, BaAddrNo = 1 };
+                    _delib.BoSystabs.Add(systab);
+                    nextId = 1;
+                }
+                else
+                {
+                    systab.BaAddrNo = (systab.BaAddrNo ?? 0) + 1;
+                    nextId = systab.BaAddrNo.Value;
+                }
+                
+                // Safety: check if this ID already exists in BOR_ADDR (systab might be out of sync)
+                var maxExisting = await _delib.BorAddrs.MaxAsync(a => (int?)a.BaAddrNo) ?? 0;
+                if (nextId <= maxExisting)
+                {
+                    nextId = maxExisting + 1;
+                    systab.BaAddrNo = nextId; // Sync systab back up
+                }
+
+                address.BaAddrNo = nextId;
+                _delib.BorAddrs.Add(address);
+            }
+            else
+            {
+                // Update existing
+                var existing = await _delib.BorAddrs.FirstOrDefaultAsync(a => a.BaBorNo == address.BaBorNo && a.BaAddrNo == address.BaAddrNo);
+                if (existing == null) return false;
+
+                _delib.Entry(existing).CurrentValues.SetValues(address);
+            }
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DeleteAddressAsync(int borNo, int addrNo)
+        {
+            var address = await _delib.BorAddrs.FirstOrDefaultAsync(a => a.BaBorNo == borNo && a.BaAddrNo == addrNo);
+            if (address == null) return false;
+
+            _delib.BorAddrs.Remove(address);
+            return await _delib.SaveChangesAsync() > 0;
         }
     }
 }

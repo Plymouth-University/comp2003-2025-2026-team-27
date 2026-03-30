@@ -39,10 +39,35 @@ namespace LmsModernApp.Controllers
                 if (borrower != null)
                 {
                     model.Borrower = borrower;
+                    await PopulateAddressesAsync(model);
                 }
             }
 
             return View(model);
+        }
+
+        private async Task PopulateAddressesAsync(BorrowerMaintenanceViewModel model)
+        {
+            if (model.Borrower.BorNo > 0)
+            {
+                var mainAddr = await _borrowerRepository.GetMainAddressAsync(model.Borrower.BorNo);
+                if (mainAddr != null)
+                {
+                    model.CorrespondenceAddress = FormatAddress(mainAddr.BaAddr1, mainAddr.BaAddr2, mainAddr.BaSuburbCd, mainAddr.BaPcode);
+                }
+                else
+                {
+                    model.CorrespondenceAddress = model.Borrower.BorAddr1Txt;
+                }
+
+                model.ResidentialAddress = model.Borrower.BorAddr2Txt;
+                model.GuardianAddress = model.Borrower.BorAddr3Txt;
+            }
+        }
+
+        private string FormatAddress(params string?[] parts)
+        {
+            return string.Join(", ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
         }
 
         private async Task PrepareNavigationListAsync()
@@ -366,6 +391,7 @@ namespace LmsModernApp.Controllers
             }
 
             await PopulateLookupsAsync(model);
+            await PopulateAddressesAsync(model);
             return View("Index", model);
         }
 
@@ -404,6 +430,8 @@ namespace LmsModernApp.Controllers
             model.Titles = await _borrowerRepository.GetTitlesAsync();
             model.Areas = await _borrowerRepository.GetAreasAsync();
             model.Wards = await _borrowerRepository.GetWardsAsync();
+            model.Suburbs = await _borrowerRepository.GetSuburbsAsync();
+            model.AddressTypes = await _borrowerRepository.GetAddressTypesAsync();
         }
 
         public IActionResult AdvancedSearch()
@@ -568,9 +596,77 @@ namespace LmsModernApp.Controllers
             return View();
         }
 
+        public async Task<IActionResult> Addresses(int? borNo, string? type)
+        {
+            if (borNo.HasValue)
+            {
+                HttpContext.Session.SetInt32("SelectedBorrowerId", borNo.Value);
+            }
+
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            var model = new BorrowerMaintenanceViewModel();
+            await PopulateLookupsAsync(model);
+
+            if (selectedId.HasValue)
+            {
+                var borrower = await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value);
+                if (borrower != null)
+                {
+                    model.Borrower = borrower;
+                    model.Addresses = await _borrowerRepository.GetBorrowerAddressesAsync(selectedId.Value);
+
+                    if (type == "Correspondence")
+                    {
+                        var main = await _borrowerRepository.GetMainAddressAsync(selectedId.Value);
+                        if (main != null) model.SelectedAddress = main;
+                        else model.SelectedAddress = new BorAddr { BaAddr1 = borrower.BorAddr1Txt, BaAddressTypeId = 0 };
+                    }
+                    else if (type == "Residential")
+                    {
+                        model.SelectedAddress = new BorAddr { BaAddr1 = borrower.BorAddr2Txt, BaAddressTypeId = 1 };
+                    }
+                    else if (type == "Guardian")
+                    {
+                        model.SelectedAddress = new BorAddr { BaAddr1 = borrower.BorAddr3Txt, BaAddressTypeId = 2 };
+                    }
+                }
+            }
+
+            return View(model);
+        }
+
         public IActionResult Import()
         {
             return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveAddress(BorrowerMaintenanceViewModel model)
+        {
+            if (model.SelectedAddress != null)
+            {
+                // Ensure BaBorNo is set
+                model.SelectedAddress.BaBorNo = model.Borrower.BorNo;
+                
+                // If it's a new address (BaAddrNo is null or 0), the repository should handle it.
+                // According to old logic: It checks if this is the only address of its type; if so, it automatically marks it as the "Main" address.
+                var existingAddresses = await _borrowerRepository.GetBorrowerAddressesAsync(model.Borrower.BorNo);
+                if (!existingAddresses.Any(a => a.BaAddressTypeId == model.SelectedAddress.BaAddressTypeId))
+                {
+                    model.SelectedAddress.BaMain = true;
+                }
+
+                await _borrowerRepository.SaveAddressAsync(model.SelectedAddress);
+            }
+
+            return RedirectToAction(nameof(Addresses), new { borNo = model.Borrower.BorNo });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAddress(int borNo, int addrNo)
+        {
+            await _borrowerRepository.DeleteAddressAsync(borNo, addrNo);
+            return RedirectToAction(nameof(Addresses), new { borNo = borNo });
         }
     }
 }

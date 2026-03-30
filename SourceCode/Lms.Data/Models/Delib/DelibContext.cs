@@ -2708,9 +2708,9 @@ public partial class DelibContext : DbContext
 
         modelBuilder.Entity<BorAddr>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("BOR_ADDR", tb => tb.HasTrigger("trg_bor_addr_audit"));
+            entity.HasKey(e => e.BaAddrNo).HasName("PK_BOR_ADDR");
+
+            entity.ToTable("BOR_ADDR", tb => tb.HasTrigger("trg_bor_addr_audit"));
 
             entity.HasIndex(e => e.BaAddrNo, "BAADDR_NOX").IsUnique();
 

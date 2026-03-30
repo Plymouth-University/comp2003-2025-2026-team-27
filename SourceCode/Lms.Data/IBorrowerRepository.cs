@@ -63,6 +63,11 @@ namespace Lms.Data
             string sortOrder);
 
         Task<BorAddr?> GetMainAddressAsync(int borNo);
+        Task<List<BorAddr>> GetBorrowerAddressesAsync(int borNo);
+        Task<List<ABorAddressType>> GetAddressTypesAsync();
+        Task<List<Lms.Data.Models.Delocal.Suburb>> GetSuburbsAsync();
+        Task<bool> SaveAddressAsync(BorAddr address);
+        Task<bool> DeleteAddressAsync(int borNo, int addrNo);
     }
 
     public class LookupItem

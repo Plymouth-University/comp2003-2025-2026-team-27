@@ -1,0 +1,329 @@
+@model LmsModernApp.Models.BorrowerMaintenanceViewModel
+@{
+    ViewData["Title"] = "Borrower Addresses";
+}
+
+<style>
+    .lms-label { font-size: 0.85rem; font-weight: 600; color: #444; margin-bottom: 2px; }
+    .form-control-sm, .form-select-sm { border-radius: 2px; border: 1px solid #bbb !important; }
+    .action-link { color: #007bff; cursor: pointer; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .action-link:hover { text-decoration: underline; }
+    .section-bar { background-color: #007bff; color: white; padding: 5px 10px; font-weight: bold; margin-top: 20px; }
+    .address-grid-header { font-weight: bold; border-bottom: 2px solid #dee2e6; padding: 10px 0; }
+    .address-grid-row { padding: 10px 0; border-bottom: 1px solid #eee; }
+    .clickable-address { color: #0056b3; text-decoration: underline; font-weight: 500; }
+    .selectable-row:hover .clickable-address { color: #003d80; }
+</style>
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-3">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="h5">Borrower:</span>
+                <span class="h5 text-primary ms-2">@Model.Borrower.BorGiven @Model.Borrower.BorSurname</span>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="d-flex gap-3 mb-4 border-bottom pb-2">
+            <span class="action-link" id="btnNew">New</span>
+            <span class="action-link" id="btnCancel">Cancel</span>
+            <span class="action-link" id="btnSave">Save</span>
+            <span class="action-link" id="btnDelete">Delete</span>
+            <span class="action-link ms-4" id="btnFirst">First</span>
+            <span class="action-link" id="btnPrev">Prev</span>
+            <span class="action-link" id="btnNext">Next</span>
+            <span class="action-link" id="btnLast">Last</span>
+        </div>
+
+        <form id="addressForm" method="post" asp-action="SaveAddress">
+            <input type="hidden" asp-for="Borrower.BorNo" />
+            <input type="hidden" asp-for="SelectedAddress.BaAddrNo" id="hfAddrNo" />
+            <input type="hidden" asp-for="SelectedAddress.BaBorNo" value="@Model.Borrower.BorNo" />
+            <div class="row">
+                <!-- Column 1 -->
+                <div class="col-md-4">
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"><strong>Telephone</strong></div>
+                        <div class="col-8"><input type="text" asp-for="SelectedAddress.BaTelephone" class="form-control form-control-sm" /></div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"><strong>Address</strong></div>
+                        <div class="col-8"><input type="text" asp-for="SelectedAddress.BaAddr1" class="form-control form-control-sm" /></div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"></div>
+                        <div class="col-8"><input type="text" asp-for="SelectedAddress.BaAddr2" class="form-control form-control-sm" /></div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"></div>
+                        <div class="col-8"><input type="text" asp-for="SelectedAddress.BaAddr3" class="form-control form-control-sm" /></div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"></div>
+                        <div class="col-8"><input type="text" asp-for="SelectedAddress.BaAddr4" class="form-control form-control-sm" /></div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"></div>
+                        <div class="col-8"><input type="text" asp-for="SelectedAddress.BaAddr5" class="form-control form-control-sm" /></div>
+                    </div>
+                </div>
+
+                <!-- Column 2 -->
+                <div class="col-md-4">
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"><strong>Post Office</strong></div>
+                        <div class="col-8"><input type="text" asp-for="SelectedAddress.BaWardCd" class="form-control form-control-sm" /></div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"><strong>Area</strong></div>
+                        <div class="col-8">
+                            <select asp-for="SelectedAddress.BaAreaCd" class="form-select form-select-sm">
+                                <option value="">-- Select --</option>
+                                @foreach (var item in Model.Areas) { <option value="@item.Code">@item.Name</option> }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"><strong>Suburb</strong></div>
+                        <div class="col-8">
+                            <select asp-for="SelectedAddress.BaSuburbCd" class="form-select form-select-sm" id="ddlSuburb">
+                                <option value="">-- Select --</option>
+                                @foreach (var item in Model.Suburbs) { <option value="@item.SuburbCode" data-postcode="@item.SuburbPostcode">@item.SuburbName</option> }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-4 text-end"><strong>Postal code</strong></div>
+                        <div class="col-8"><input type="text" asp-for="SelectedAddress.BaPcode" class="form-control form-control-sm" /></div>
+                    </div>
+                </div>
+
+                <!-- Column 3 -->
+                <div class="col-md-4">
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-5 text-end"><strong>Pop-up</strong></div>
+                        <div class="col-7">
+                            <select asp-for="SelectedAddress.BaPopup" class="form-select form-select-sm">
+                                <option value="">-- Select --</option>
+                                <option value="Y">Yes</option>
+                                <option value="N">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-5 text-end"><strong>Address Type</strong></div>
+                        <div class="col-7">
+                            <select asp-for="SelectedAddress.BaAddressTypeId" class="form-select form-select-sm">
+                                <option value="">-- Select --</option>
+                                @foreach (var type in Model.AddressTypes)
+                                {
+                                    <option value="@type.AddressTypeId">@type.AdddressTypeDescription</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-5 text-end"><strong>Value from</strong></div>
+                        <div class="col-7">
+                            <input type="date" asp-for="SelectedAddress.BaValidFrom" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-5 text-end"><strong>Valid to</strong></div>
+                        <div class="col-7">
+                            <input type="date" asp-for="SelectedAddress.BaValidTo" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="section-bar">Address List</div>
+        
+        <div class="container-fluid">
+            <div class="row address-grid-header">
+                <div class="col">Address Type</div>
+                <div class="col">Address</div>
+                <div class="col">Post Code</div>
+                <div class="col">Valid From</div>
+                <div class="col">Valid To</div>
+            </div>
+            @if (Model.Addresses != null && Model.Addresses.Any())
+            {
+                foreach (var addr in Model.Addresses)
+                {
+                    var typeDesc = Model.AddressTypes.FirstOrDefault(t => (int)t.AddressTypeId == (addr.BaAddressTypeId ?? -1))?.AdddressTypeDescription ?? "Other";
+                    <div class="row address-grid-row selectable-row" style="cursor: pointer;" 
+                         data-addr='@System.Text.Json.JsonSerializer.Serialize(addr)'>
+                        <div class="col">@typeDesc</div>
+                        <div class="col clickable-address">@addr.BaAddr1 @addr.BaAddr2</div>
+                        <div class="col">@addr.BaPcode</div>
+                        <div class="col">@addr.BaValidFrom?.ToString("dd/MM/yyyy")</div>
+                        <div class="col">@addr.BaValidTo?.ToString("dd/MM/yyyy")</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="row address-grid-row">
+                    <div class="col text-center text-muted py-4">No addresses found in BorAddr table for this borrower.</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = Array.from(document.querySelectorAll('.selectable-row'));
+            const form = document.getElementById('addressForm');
+            const hfAddrNo = document.getElementById('hfAddrNo');
+            let currentIndex = -1;
+
+            function clearScreen() {
+                form.reset();
+                hfAddrNo.value = '';
+                rows.forEach(r => r.style.backgroundColor = '');
+                currentIndex = -1;
+                checkNavigation();
+            }
+
+            function loadAddress(index) {
+                if (index < 0 || index >= rows.length) return;
+                currentIndex = index;
+                const row = rows[index];
+                const addr = JSON.parse(row.dataset.addr);
+                
+                // Map fields - Use explicit null/undefined checks to allow '0' values
+                const setVal = (selector, val) => {
+                    const el = document.querySelector(selector);
+                    if (el) el.value = (val !== null && val !== undefined) ? val : '';
+                };
+
+                setVal('[name="SelectedAddress.BaAddrNo"]', addr.BaAddrNo);
+                setVal('[name="SelectedAddress.BaTelephone"]', addr.BaTelephone);
+                setVal('[name="SelectedAddress.BaAddr1"]', addr.BaAddr1);
+                setVal('[name="SelectedAddress.BaAddr2"]', addr.BaAddr2);
+                setVal('[name="SelectedAddress.BaAddr3"]', addr.BaAddr3);
+                setVal('[name="SelectedAddress.BaAddr4"]', addr.BaAddr4);
+                setVal('[name="SelectedAddress.BaAddr5"]', addr.BaAddr5);
+                setVal('[name="SelectedAddress.BaWardCd"]', addr.BaWardCd);
+                setVal('[name="SelectedAddress.BaAreaCd"]', addr.BaAreaCd);
+                setVal('[name="SelectedAddress.BaSuburbCd"]', addr.BaSuburbCd);
+                setVal('[name="SelectedAddress.BaPcode"]', addr.BaPcode);
+                setVal('[name="SelectedAddress.BaPopup"]', addr.BaPopup);
+                setVal('[name="SelectedAddress.BaAddressTypeId"]', addr.BaAddressTypeId);
+                
+                if (addr.BaValidFrom) {
+                    document.querySelector('[name="SelectedAddress.BaValidFrom"]').value = addr.BaValidFrom.split('T')[0];
+                } else {
+                    document.querySelector('[name="SelectedAddress.BaValidFrom"]').value = '';
+                }
+                if (addr.BaValidTo) {
+                    document.querySelector('[name="SelectedAddress.BaValidTo"]').value = addr.BaValidTo.split('T')[0];
+                } else {
+                    document.querySelector('[name="SelectedAddress.BaValidTo"]').value = '';
+                }
+
+                // Highlight selected row
+                rows.forEach(r => r.style.backgroundColor = '');
+                row.style.backgroundColor = '#e9ecef';
+                checkNavigation();
+            }
+
+            function checkNavigation() {
+                document.getElementById('btnFirst').style.opacity = (currentIndex <= 0) ? '0.5' : '1';
+                document.getElementById('btnPrev').style.opacity = (currentIndex <= 0) ? '0.5' : '1';
+                document.getElementById('btnNext').style.opacity = (currentIndex < 0 || currentIndex >= rows.length - 1) ? '0.5' : '1';
+                document.getElementById('btnLast').style.opacity = (currentIndex < 0 || currentIndex >= rows.length - 1) ? '0.5' : '1';
+            }
+
+            // Row selection logic
+            rows.forEach((row, index) => {
+                row.addEventListener('click', function() {
+                    loadAddress(index);
+                });
+            });
+
+            // Action Buttons
+            document.getElementById('btnNew').addEventListener('click', clearScreen);
+
+            document.getElementById('btnCancel').addEventListener('click', function() {
+                if (rows.length > 0) loadAddress(0);
+                else clearScreen();
+            });
+
+            document.getElementById('btnSave').addEventListener('click', function() {
+                form.submit();
+            });
+
+            document.getElementById('btnDelete').addEventListener('click', function() {
+                const addrNo = hfAddrNo.value;
+                if (!addrNo) {
+                    alert('Please select an address to delete.');
+                    return;
+                }
+                if (confirm('Are you sure you want to delete this address?')) {
+                    const borNo = document.querySelector('[name="Borrower.BorNo"]').value;
+                    const deleteForm = document.createElement('form');
+                    deleteForm.method = 'POST';
+                    deleteForm.action = '@Url.Action("DeleteAddress", "Users")';
+                    
+                    const inputBorNo = document.createElement('input');
+                    inputBorNo.type = 'hidden';
+                    inputBorNo.name = 'borNo';
+                    inputBorNo.value = borNo;
+                    deleteForm.appendChild(inputBorNo);
+
+                    const inputAddrNo = document.createElement('input');
+                    inputAddrNo.type = 'hidden';
+                    inputAddrNo.name = 'addrNo';
+                    inputAddrNo.value = addrNo;
+                    deleteForm.appendChild(inputAddrNo);
+
+                    document.body.appendChild(deleteForm);
+                    deleteForm.submit();
+                }
+            });
+
+            // Navigation Buttons
+            document.getElementById('btnFirst').addEventListener('click', () => loadAddress(0));
+            document.getElementById('btnLast').addEventListener('click', () => loadAddress(rows.length - 1));
+            document.getElementById('btnPrev').addEventListener('click', () => {
+                if (currentIndex > 0) loadAddress(currentIndex - 1);
+            });
+            document.getElementById('btnNext').addEventListener('click', () => {
+                if (currentIndex >= 0 && currentIndex < rows.length - 1) loadAddress(currentIndex + 1);
+            });
+
+            // Suburb -> Postcode auto-fill
+            const ddlSuburb = document.getElementById('ddlSuburb');
+            const txtPcode = document.querySelector('[name="SelectedAddress.BaPcode"]');
+            
+            ddlSuburb.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.value) {
+                    const postcode = selectedOption.dataset.postcode;
+                    if (postcode) {
+                        txtPcode.value = postcode;
+                    }
+                }
+            });
+
+            // Initial state
+            checkNavigation();
+            // If there's a selected address already (from server), try to find its index
+            const initialAddrNo = hfAddrNo.value;
+            if (initialAddrNo) {
+                const initialIndex = rows.findIndex(r => JSON.parse(r.dataset.addr).BaAddrNo == initialAddrNo);
+                if (initialIndex >= 0) loadAddress(initialIndex);
+            }
+        });
+    </script>
+}

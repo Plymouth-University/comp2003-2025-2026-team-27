@@ -5,7 +5,7 @@ namespace Lms.Data.Models.Delib;
 
 public partial class BorAddr
 {
-    public int? BaAddrNo { get; set; }
+    public int BaAddrNo { get; set; }
 
     public string? BaTelephone { get; set; }
 
