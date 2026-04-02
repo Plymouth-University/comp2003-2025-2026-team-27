@@ -1,0 +1,61 @@
+﻿@model LmsModernApp.ViewModels.CatalogueEditViewModel
+
+<div class="form-grid">
+    <div class="form-row">
+        <label>Title</label>
+        <input type="text" name="Title" value="@Model.Title" class="form-input wide" placeholder="Book title…" />
+    </div>
+    <div class="form-row">
+        <label>Author</label>
+        <input type="text" name="Author" value="@Model.Author" class="form-input wide" placeholder="Author name…" />
+    </div>
+    <div class="form-row">
+        <label>Publisher</label>
+        <input type="text" name="Publisher" value="@Model.Publisher" class="form-input wide" placeholder="Publisher…" />
+    </div>
+    <div class="form-row">
+        <label>Call Number</label>
+        <input type="text" name="CallNumber" value="@Model.CallNumber" class="form-input" placeholder="e.g. 823.914 ORW" />
+    </div>
+    <div class="form-row">
+        <label>Template</label>
+        <select name="TemplateId" class="form-input">
+            <option value="">— Select —</option>
+            @foreach (var t in Model.TemplateIds)
+            {
+                if (Model.TemplateId == t)
+                {
+                    <option value="@t" selected>@t</option>
+                }
+                else
+                {
+                    <option value="@t">@t</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="form-row">
+        <label>Library Group</label>
+        <select name="LibGroup" class="form-input">
+            @foreach (var g in Model.LibGroups)
+            {
+                if (Model.LibGroup == g)
+                {
+                    <option value="@g" selected>@g</option>
+                }
+                else
+                {
+                    <option value="@g">@g</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="form-row">
+        <label>OPAC Restriction</label>
+        <input type="text" name="CatRestrict" value="@Model.CatRestrict" class="form-input short" maxlength="1" placeholder="Y / N" />
+    </div>
+    <div class="form-row">
+        <label>Security</label>
+        <input type="number" name="CatSecurity" value="@Model.CatSecurity" class="form-input short" min="0" max="99" step="1" />
+    </div>
+</div>

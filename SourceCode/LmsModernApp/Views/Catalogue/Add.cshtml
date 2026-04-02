@@ -1,0 +1,172 @@
+﻿@model LmsModernApp.ViewModels.CatalogueEditViewModel
+@{
+    ViewData["Title"] = "Add Catalogue Record";
+    Layout = "_Layout";
+}
+
+<partial name="_DashboardHeader" />
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    :root {
+        --primary: #1f66d1;
+        --primary-light: #2b78ff;
+        --accent: #d11b2d;
+        --surface: #f8f9fc;
+        --border: #dde3f0;
+        --text-main: #1e2a45;
+        --text-muted: #6b7a99;
+        --radius: 6px;
+        --shadow-sm: 0 1px 3px rgba(26,79,186,.10);
+        --shadow-md: 0 4px 16px rgba(26,79,186,.12);
+    }
+
+    .edit-wrap, .edit-wrap * {
+        font-family: 'DM Sans', sans-serif;
+        box-sizing: border-box;
+    }
+
+    .edit-wrap {
+        max-width: 680px;
+        margin: 32px auto;
+        padding: 0 16px;
+    }
+
+    .edit-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    .edit-card-header {
+        background: var(--primary);
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .edit-card-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+    .edit-card-body {
+        padding: 24px 24px 20px;
+    }
+
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .form-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+        .form-row label {
+            width: 140px;
+            min-width: 140px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+    .form-input {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--surface);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+        .form-input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(43,120,255,.12);
+        }
+
+        .form-input.wide {
+            flex: 1;
+        }
+
+        .form-input.short {
+            width: 80px;
+        }
+
+    .edit-card-footer {
+        padding: 14px 24px;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .btn-save {
+        padding: 7px 22px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--primary);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background .13s;
+    }
+
+        .btn-save:hover {
+            background: var(--primary-light);
+        }
+
+    .btn-cancel {
+        padding: 7px 18px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: background .13s;
+    }
+
+        .btn-cancel:hover {
+            background: var(--surface);
+        }
+</style>
+
+<div class="edit-wrap">
+    <div class="edit-card">
+        <div class="edit-card-header">
+            <h2>Add New Catalogue Record</h2>
+        </div>
+        <form asp-controller="Catalogue" asp-action="Add" method="post">
+            @Html.AntiForgeryToken()
+            <div class="edit-card-body">
+                <partial name="_CatalogueForm" model="Model" />
+            </div>
+            <div class="edit-card-footer">
+                <a asp-controller="Catalogue" asp-action="Index" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-save">Save Record</button>
+            </div>
+        </form>
+    </div>
+</div>
+

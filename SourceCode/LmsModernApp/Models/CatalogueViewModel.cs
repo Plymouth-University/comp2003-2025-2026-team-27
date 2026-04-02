@@ -4,6 +4,8 @@ namespace LmsModernApp.ViewModels
 {
     public class CatalogueViewModel
     {
+        public const int PageSize = 20;
+
         // Search fields
         public string? SearchText { get; set; }
         public string? SearchMethod { get; set; } = "Ref Number";
@@ -12,6 +14,11 @@ namespace LmsModernApp.ViewModels
         public string? Security { get; set; } = "0";
         public string? LibraryGroup { get; set; }
         public string? TemplateId { get; set; }
+
+        // Pagination
+        public int Page { get; set; } = 0;
+        public int TotalCount { get; set; } = 0;
+        public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
 
         // Available search methods for dropdown
         public List<string> SearchMethods { get; set; } = new()

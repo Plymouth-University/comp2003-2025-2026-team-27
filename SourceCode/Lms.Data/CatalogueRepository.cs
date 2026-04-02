@@ -12,20 +12,128 @@ namespace Lms.Data
             _context = context;
         }
 
-        public async Task<IEnumerable<Catalogue>> SearchByRefNumberAsync(int catNo, string? libGroup)
+        // ── Search ────────────────────────────────────────────────────────────
+
+        public async Task<(IEnumerable<Catalogue> Items, int TotalCount)> SearchByRefNumberAsync(
+            int catNo, string? libGroup, int page, int pageSize)
         {
-            var query = _context.Catalogues.AsQueryable();
+            var query = _context.Catalogues.AsQueryable()
+                .Where(c => c.CatNo == catNo);
 
-            // Filter by CAT_NO
-            query = query.Where(c => c.CatNo == catNo);
-
-            // Optionally filter by library group if provided
             if (!string.IsNullOrWhiteSpace(libGroup))
-            {
                 query = query.Where(c => c.CatLibGroup == libGroup);
-            }
 
-            return await query.ToListAsync();
+            var total = await query.CountAsync();
+            var items = await query.Skip(page * pageSize).Take(pageSize).ToListAsync();
+            return (items, total);
+        }
+
+        public async Task<(IEnumerable<Catalogue> Items, int TotalCount)> SearchByTitleAsync(
+            string title, string? libGroup, int page, int pageSize)
+        {
+            var pattern = "%" + title.ToUpper() + "%";
+            var query = _context.Catalogues.AsQueryable()
+                .Where(c => EF.Functions.Like(c.CatKey2, pattern));
+
+            if (!string.IsNullOrWhiteSpace(libGroup))
+                query = query.Where(c => c.CatLibGroup == libGroup);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip(page * pageSize).Take(pageSize).ToListAsync();
+            return (items, total);
+        }
+
+        public async Task<(IEnumerable<Catalogue> Items, int TotalCount)> SearchByAuthorAsync(
+            string author, string? libGroup, int page, int pageSize)
+        {
+            var pattern = "%" + author.ToUpper() + "%";
+            var query = _context.Catalogues.AsQueryable()
+                .Where(c => EF.Functions.Like(c.CatKey1, pattern));
+
+            if (!string.IsNullOrWhiteSpace(libGroup))
+                query = query.Where(c => c.CatLibGroup == libGroup);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip(page * pageSize).Take(pageSize).ToListAsync();
+            return (items, total);
+        }
+
+        public async Task<(IEnumerable<Catalogue> Items, int TotalCount)> SearchByCallNumberAsync(
+            string callNumber, string? libGroup, int page, int pageSize)
+        {
+            var pattern = "%" + callNumber.ToUpper() + "%";
+            var query = _context.Catalogues.AsQueryable()
+                .Where(c => EF.Functions.Like(c.CatKey4, pattern));
+
+            if (!string.IsNullOrWhiteSpace(libGroup))
+                query = query.Where(c => c.CatLibGroup == libGroup);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip(page * pageSize).Take(pageSize).ToListAsync();
+            return (items, total);
+        }
+
+        // ── Single record ─────────────────────────────────────────────────────
+
+        public async Task<Catalogue?> GetByRefNumberAsync(int catNo, string? libGroup)
+        {
+            var query = _context.Catalogues.AsQueryable()
+                .Where(c => c.CatNo == catNo);
+
+            if (!string.IsNullOrWhiteSpace(libGroup))
+                query = query.Where(c => c.CatLibGroup == libGroup);
+
+            return await query.FirstOrDefaultAsync();
+        }
+
+        // ── Write ─────────────────────────────────────────────────────────────
+
+        public async Task<int> AddAsync(Catalogue cat)
+        {
+            var nextNo = (await _context.Catalogues
+                .Where(c => c.CatNo != null)
+                .MaxAsync(c => (int?)c.CatNo) ?? 0) + 1;
+
+            cat.CatNo = nextNo;
+
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                INSERT INTO CATALOGUE
+                    (CAT_NO, CAT_STR1, CAT_STR2, CAT_STR3, CAT_STR4,
+                     CAT_KEY1, CAT_KEY2, CAT_KEY3, CAT_KEY4,
+                     CAT_LIB_GROUP, TEMPLATE_ID,
+                     CAT_RESTRICT, CAT_SECURITY,
+                     CAT_OPER, CAT_DATETIME,
+                     CAT_CREATE_OPER, CAT_CREATE_DATETIME)
+                VALUES
+                    ({cat.CatNo}, {cat.CatStr1}, {cat.CatStr2}, {cat.CatStr3}, {cat.CatStr4},
+                     {cat.CatKey1}, {cat.CatKey2}, {cat.CatKey3}, {cat.CatKey4},
+                     {cat.CatLibGroup}, {cat.TemplateId},
+                     {cat.CatRestrict}, {cat.CatSecurity},
+                     {cat.CatOper}, {cat.CatDatetime},
+                     {cat.CatCreateOper}, {cat.CatCreateDatetime})");
+
+            return nextNo;
+        }
+
+        public async Task UpdateAsync(Catalogue cat)
+        {
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE CATALOGUE SET
+                    CAT_STR1            = {cat.CatStr1},
+                    CAT_STR2            = {cat.CatStr2},
+                    CAT_STR3            = {cat.CatStr3},
+                    CAT_STR4            = {cat.CatStr4},
+                    CAT_KEY1            = {cat.CatKey1},
+                    CAT_KEY2            = {cat.CatKey2},
+                    CAT_KEY3            = {cat.CatKey3},
+                    CAT_KEY4            = {cat.CatKey4},
+                    CAT_LIB_GROUP       = {cat.CatLibGroup},
+                    TEMPLATE_ID         = {cat.TemplateId},
+                    CAT_RESTRICT        = {cat.CatRestrict},
+                    CAT_SECURITY        = {cat.CatSecurity},
+                    CAT_OPER            = {cat.CatOper},
+                    CAT_DATETIME        = {cat.CatDatetime}
+                WHERE CAT_NO = {cat.CatNo}");
         }
     }
 }
