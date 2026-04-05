@@ -14,6 +14,8 @@
         public string? CatRestrict { get; set; }
         public decimal? CatSecurity { get; set; } = 0;
 
+        public string? ReturnUrl { get; set; }
+
         public List<string> LibGroups { get; set; } = new() { "LIBRARY" };
 
         public List<string> TemplateIds { get; set; } = new()

@@ -1,8 +1,8 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using LmsModernApp.ViewModels;
 using Lms.Data;
 using Lms.Data.Models.Decat;
-using LmsModernApp.ViewModels;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace LmsModernApp.Controllers
 {
@@ -16,7 +16,7 @@ namespace LmsModernApp.Controllers
             _catalogueRepository = catalogueRepository;
         }
 
-        // ?? Index / Search ????????????????????????????????????????????????????
+        // ── Index / Search ────────────────────────────────────────────────────
 
         public IActionResult Index()
         {
@@ -35,8 +35,13 @@ namespace LmsModernApp.Controllers
             return View(model);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Search(CatalogueViewModel model)
+        [HttpGet, ActionName("Search")]
+        public async Task<IActionResult> SearchGet(CatalogueViewModel model) => await RunSearch(model);
+
+        [HttpPost, ActionName("Search")]
+        public async Task<IActionResult> SearchPost(CatalogueViewModel model) => await RunSearch(model);
+
+        private async Task<IActionResult> RunSearch(CatalogueViewModel model)
         {
             model.Items = new List<CatalogueRowViewModel>();
 
@@ -101,7 +106,37 @@ namespace LmsModernApp.Controllers
             return View("Index", model);
         }
 
-        // ?? Add ???????????????????????????????????????????????????????????????
+        // ── Details ──────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int catNo, string? libGroup)
+        {
+            var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
+
+            if (record == null)
+                return RedirectToAction(nameof(Index));
+
+            var model = new CatalogueDetailsViewModel
+            {
+                CatNo = record.CatNo,
+                Author = record.CatStr1,
+                Title = record.CatStr2,
+                Publisher = record.CatStr3,
+                CallNumber = record.CatStr4,
+                LibGroup = record.CatLibGroup,
+                TemplateId = record.TemplateId,
+                CatRestrict = record.CatRestrict,
+                CatSecurity = record.CatSecurity,
+                CreatedBy = record.CatCreateOper,
+                CreatedDate = record.CatCreateDatetime,
+                LastModifiedBy = record.CatOper,
+                LastModifiedDate = record.CatDatetime
+            };
+
+            return View(model);
+        }
+
+        // ── Add ───────────────────────────────────────────────────────────────
 
         [HttpGet]
         public IActionResult Add()
@@ -143,10 +178,10 @@ namespace LmsModernApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ?? Modify ????????????????????????????????????????????????????????????
+        // ── Modify ────────────────────────────────────────────────────────────
 
         [HttpGet]
-        public async Task<IActionResult> Modify(int catNo, string? libGroup)
+        public async Task<IActionResult> Modify(int catNo, string? libGroup, string? returnUrl)
         {
             var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
 
@@ -163,10 +198,41 @@ namespace LmsModernApp.Controllers
                 LibGroup = record.CatLibGroup,
                 TemplateId = record.TemplateId,
                 CatRestrict = record.CatRestrict,
-                CatSecurity = record.CatSecurity
+                CatSecurity = record.CatSecurity,
+                ReturnUrl = returnUrl
             };
 
             return View(model);
+        }
+
+        // ── Delete ───────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> Delete(int catNo, string? libGroup)
+        {
+            var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
+
+            if (record == null)
+                return NotFound();
+
+            var model = new CatalogueDeleteViewModel
+            {
+                CatNo = record.CatNo,
+                Author = record.CatStr1,
+                Title = record.CatStr2,
+                Publisher = record.CatStr3,
+                CallNumber = record.CatStr4,
+                LibGroup = record.CatLibGroup
+            };
+
+            return View(model);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        public async Task<IActionResult> DeleteConfirmed(int catNo)
+        {
+            await _catalogueRepository.DeleteAsync(catNo);
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
@@ -196,7 +262,9 @@ namespace LmsModernApp.Controllers
 
             await _catalogueRepository.UpdateAsync(cat);
 
-            return RedirectToAction(nameof(Index));
+            return !string.IsNullOrEmpty(model.ReturnUrl)
+                ? Redirect(model.ReturnUrl)
+                : RedirectToAction(nameof(Index));
         }
     }
 }

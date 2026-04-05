@@ -12,5 +12,7 @@ namespace Lms.Data
         Task<Catalogue?> GetByRefNumberAsync(int catNo, string? libGroup);
         Task<int> AddAsync(Catalogue catalogue);
         Task UpdateAsync(Catalogue catalogue);
+
+        Task DeleteAsync(int catNo);
     }
 }

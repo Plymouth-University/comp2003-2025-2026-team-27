@@ -1,0 +1,192 @@
+﻿@model LmsModernApp.ViewModels.CatalogueDetailsViewModel
+@{
+    ViewData["Title"] = "Catalogue Record";
+    Layout = "_Layout";
+}
+
+<partial name="_DashboardHeader" />
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    :root {
+        --primary:       #1f66d1;
+        --primary-light: #2b78ff;
+        --accent:        #d11b2d;
+        --surface:       #f8f9fc;
+        --border:        #dde3f0;
+        --text-main:     #1e2a45;
+        --text-muted:    #6b7a99;
+        --radius:        6px;
+        --shadow-sm:     0 1px 3px rgba(26,79,186,.10);
+        --shadow-md:     0 4px 16px rgba(26,79,186,.12);
+    }
+
+    .det-wrap, .det-wrap * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+
+    .det-wrap {
+        max-width: 700px;
+        margin: 32px auto;
+        padding: 0 16px;
+    }
+
+    .det-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    .det-card-header {
+        background: var(--primary);
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .det-card-header h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .det-header-actions { display: flex; gap: 6px; }
+
+    .btn-hdr {
+        padding: 5px 14px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: background .13s, color .13s;
+    }
+
+    .btn-hdr-edit   { background: rgba(255,255,255,.20); color: #fff; }
+    .btn-hdr-edit:hover { background: rgba(255,255,255,.35); color: #fff; }
+
+    .btn-hdr-delete { background: var(--accent); color: #fff; }
+    .btn-hdr-delete:hover { background: #b71525; color: #fff; }
+
+    .btn-hdr-back   { background: transparent; color: rgba(255,255,255,.75); border: 1px solid rgba(255,255,255,.35); }
+    .btn-hdr-back:hover { background: rgba(255,255,255,.12); color: #fff; }
+
+    /* ── Field grid ── */
+    .det-section-title {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        padding: 20px 24px 8px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 0;
+    }
+
+    .det-fields {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        padding: 4px 24px 16px;
+    }
+
+    .det-label {
+        padding: 10px 0;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .det-value {
+        padding: 10px 0 10px 16px;
+        font-size: 13px;
+        color: var(--text-main);
+        border-bottom: 1px solid var(--border);
+        word-break: break-word;
+    }
+
+    .det-label:last-of-type,
+    .det-value:last-of-type { border-bottom: none; }
+
+    .det-empty { color: var(--text-muted); font-style: italic; }
+</style>
+
+<div class="det-wrap">
+    <div class="det-card">
+
+        <div class="det-card-header">
+            <h2>Catalogue Record &mdash; Ref No @Model.CatNo</h2>
+            <div class="det-header-actions">
+                <a asp-controller="Catalogue" asp-action="Index" class="btn-hdr btn-hdr-back">&#8592; Back</a>
+                <a asp-controller="Catalogue" asp-action="Modify"
+                   asp-route-catNo="@Model.CatNo"
+                   asp-route-libGroup="@Model.LibGroup"
+                   class="btn-hdr btn-hdr-edit">Edit</a>
+                <a asp-controller="Catalogue" asp-action="Delete"
+                   asp-route-catNo="@Model.CatNo"
+                   asp-route-libGroup="@Model.LibGroup"
+                   class="btn-hdr btn-hdr-delete">Delete</a>
+            </div>
+        </div>
+
+        <!-- Bibliographic details -->
+        <div class="det-section-title">Bibliographic Details</div>
+        <div class="det-fields">
+            <div class="det-label">Ref No</div>
+            <div class="det-value">@Model.CatNo</div>
+
+            <div class="det-label">Title</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.Title) ? Html.Raw("<span class=\"det-empty\">—</span>") : Html.Raw(Html.Encode(Model.Title)))</div>
+
+            <div class="det-label">Author</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.Author) ? Html.Raw("<span class=\"det-empty\">—</span>") : Html.Raw(Html.Encode(Model.Author)))</div>
+
+            <div class="det-label">Publisher</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.Publisher) ? Html.Raw("<span class=\"det-empty\">—</span>") : Html.Raw(Html.Encode(Model.Publisher)))</div>
+
+            <div class="det-label">Call Number</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.CallNumber) ? Html.Raw("<span class=\"det-empty\">—</span>") : Html.Raw(Html.Encode(Model.CallNumber)))</div>
+        </div>
+
+        <!-- Classification -->
+        <div class="det-section-title">Classification</div>
+        <div class="det-fields">
+            <div class="det-label">Library Group</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.LibGroup) ? Html.Raw("<span class=\"det-empty\">—</span>") : Html.Raw(Html.Encode(Model.LibGroup)))</div>
+
+            <div class="det-label">Template</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.TemplateId) ? Html.Raw("<span class=\"det-empty\">—</span>") : Html.Raw(Html.Encode(Model.TemplateId)))</div>
+
+            <div class="det-label">OPAC Restriction</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.CatRestrict) ? Html.Raw("<span class=\"det-empty\">None</span>") : Html.Raw(Html.Encode(Model.CatRestrict)))</div>
+
+            <div class="det-label">Security</div>
+            <div class="det-value">@(Model.CatSecurity?.ToString() ?? "0")</div>
+        </div>
+
+        <!-- Audit -->
+        <div class="det-section-title">Audit</div>
+        <div class="det-fields">
+            <div class="det-label">Created By</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.CreatedBy) ? Html.Raw("<span class=\"det-empty\">—</span>") : Html.Raw(Html.Encode(Model.CreatedBy)))</div>
+
+            <div class="det-label">Created Date</div>
+            <div class="det-value">@(Model.CreatedDate.HasValue? Model.CreatedDate.Value.ToString("dd MMM yyyy HH:mm") : Html.Raw("<span class=\"det-empty\">—</span>"))</div>
+
+            <div class="det-label">Last Modified By</div>
+            <div class="det-value">@(string.IsNullOrWhiteSpace(Model.LastModifiedBy) ? Html.Raw("<span class=\"det-empty\">—</span>") : Html.Raw(Html.Encode(Model.LastModifiedBy)))</div>
+
+            <div class="det-label">Last Modified Date</div>
+            <div class="det-value">@(Model.LastModifiedDate.HasValue? Model.LastModifiedDate.Value.ToString("dd MMM yyyy HH:mm") : Html.Raw("<span class=\"det-empty\">—</span>"))</div>
+        </div>
+
+    </div>
+</div>

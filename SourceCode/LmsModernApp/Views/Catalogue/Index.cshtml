@@ -410,15 +410,38 @@
     var selectedCatNo = null;
 
     function selectRow(row) {
+        if (row.classList.contains('row-selected')) {
+            // Second click on the already-focused row — open Details
+            window.location.href = row.dataset.detailsUrl;
+            return;
+        }
         document.querySelectorAll('.result-row').forEach(r => r.classList.remove('row-selected'));
         row.classList.add('row-selected');
         selectedCatNo = row.dataset.catno;
         document.getElementById('btn-modify').disabled = false;
+        document.getElementById('btn-delete').disabled = false;
+    }
+
+    function getSearchReturnUrl() {
+        var searchText   = document.querySelector('[name="SearchText"]').value;
+        var searchMethod = document.querySelector('[name="SearchMethod"]').value;
+        var libGroup     = document.querySelector('[name="LibGroup"]').value;
+        var page         = document.getElementById('page-input').value;
+        return '/Catalogue/Search?SearchText=' + encodeURIComponent(searchText)
+             + '&SearchMethod='                + encodeURIComponent(searchMethod)
+             + '&LibGroup='                    + encodeURIComponent(libGroup)
+             + '&Page='                        + encodeURIComponent(page);
     }
 
     function goModify() {
         if (selectedCatNo)
-            window.location.href = '/Catalogue/Modify?catNo=' + encodeURIComponent(selectedCatNo);
+            window.location.href = '/Catalogue/Modify?catNo=' + encodeURIComponent(selectedCatNo)
+                                 + '&returnUrl=' + encodeURIComponent(getSearchReturnUrl());
+    }
+
+    function goDelete() {
+        if (selectedCatNo)
+            window.location.href = '/Catalogue/Delete?catNo=' + encodeURIComponent(selectedCatNo);
     }
 </script>
 
@@ -558,7 +581,11 @@
                         {
                             foreach (var item in Model.Items)
                             {
-                                <tr class="result-row" data-catno="@item.Tag" onclick="selectRow(this)" style="cursor:pointer;">
+                                <tr class="result-row"
+                                    data-catno="@item.Tag"
+                                    data-details-url="@Url.Action("Details", "Catalogue", new { catNo = item.Tag, libGroup = Model.LibGroup })"
+                                    onclick="selectRow(this)"
+                                    style="cursor:pointer;">
                                     <td>@item.Tag</td>
                                     <td>@item.TagDescription</td>
                                     <td>@item.TagDetails</td>
@@ -582,7 +609,7 @@
                 <a asp-controller="Catalogue" asp-action="Replace" class="act-btn">Replace</a>
                 <button type="button" class="act-btn" id="btn-modify" onclick="goModify()" disabled>Modify</button>
                 <hr class="act-divider" />
-                <a asp-controller="Catalogue" asp-action="Delete" class="act-btn act-danger">Delete</a>
+                <button type="button" class="act-btn act-danger" id="btn-delete" onclick="goDelete()" disabled>Delete</button>
                 <a asp-controller="Catalogue" asp-action="Query" class="act-btn">Query</a>
             </div>
         </div>

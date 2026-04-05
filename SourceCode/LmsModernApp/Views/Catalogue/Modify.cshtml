@@ -167,11 +167,12 @@
         <form asp-controller="Catalogue" asp-action="Modify" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="CatNo" value="@Model.CatNo" />
+            <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
             <div class="edit-card-body">
                 <partial name="_CatalogueForm" model="Model" />
             </div>
             <div class="edit-card-footer">
-                <a asp-controller="Catalogue" asp-action="Index" class="btn-cancel">Cancel</a>
+                <a href="@(string.IsNullOrEmpty(Model.ReturnUrl) ? Url.Action("Index", "Catalogue") : Model.ReturnUrl)" class="btn-cancel">Cancel</a>
                 <button type="submit" class="btn-save">Save Changes</button>
             </div>
         </form>

@@ -135,5 +135,12 @@ namespace Lms.Data
                     CAT_DATETIME        = {cat.CatDatetime}
                 WHERE CAT_NO = {cat.CatNo}");
         }
+        public async Task DeleteAsync(int catNo)
+        {
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM CATALOGUE WHERE CAT_NO = {catNo}");
+        }
+
     }
+
 }
