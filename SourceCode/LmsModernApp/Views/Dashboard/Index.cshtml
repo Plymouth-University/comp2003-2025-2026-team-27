@@ -4,87 +4,136 @@
 @{
     ViewData["Title"] = "Dashboard";
 
-    // Charts data coming from controller
     var labelsJson = JsonSerializer.Serialize(Model.Labels ?? new List<string>());
     var valuesJson = JsonSerializer.Serialize(Model.Values ?? new List<int>());
+    var percentagesJson = JsonSerializer.Serialize(Model.Percentages ?? new List<double>());
+    
+    var trendsData = Model.Trends.Select(t => new {
+        label = t.Label,
+        dates = t.Points.Select(p => p.Date.ToString("yyyy-MM-dd")),
+        counts = t.Points.Select(p => p.Count)
+    });
+    var trendsJson = JsonSerializer.Serialize(trendsData);
 }
 
 <partial name="_DashboardHeader" />
 
-<form method="get" class="filter-row">
-    <div class="filter-item">
-        <label class="filter-label">Filter:</label>
-        <select class="form-select form-select-sm" name="filter">
-            <option value="Loan">Loan</option>
-            <option value="Returns">Returns</option>
-            <option value="Overdue">Overdue</option>
-        </select>
-    </div>
-
-    <div class="filter-item">
-        <label class="filter-label">Group By:</label>
-        <select class="form-select form-select-sm" name="groupBy">
-            <option value="Class">Class</option>
-            <option value="Subject">Subject</option>
-            <option value="MemberType">Member Type</option>
-        </select>
-    </div>
-
-    <div class="filter-item checkbox">
-        <input class="form-check-input" type="checkbox" id="overdueOnly" name="overdueOnly" />
-        <label class="form-check-label" for="overdueOnly">Overdue items only</label>
-    </div>
-</form>
-
-
-<div class="row g-3 mt-1">
-    
-    <div class="col-12 col-lg-6">
-        <div class="dash-panel">
-            <div class="dash-panel-header"></div>
-
-            <div class="dash-panel-body">
-                <div class="chart-shell">
-                    <canvas id="pieChart"></canvas>
+<div class="container-fluid mt-2">
+    <div class="row g-3">
+        <!-- LEFT COLUMN -->
+        <div class="col-lg-6 d-flex flex-column gap-3">
+            
+            <!-- TOP LEFT: FILTERS + PIE CHART -->
+            <div class="dash-panel">
+                <div class="dash-panel-header px-2 py-1">
+                    <span class="text-white small fw-bold">Distribution & Filters</span>
+                </div>
+                <div class="dash-panel-body p-2">
+                    <div class="row g-2 mb-3 border-bottom pb-2">
+                        <div class="col-md-3">
+                            <label class="xxs-label">Display</label>
+                            <select id="filterType" class="form-select form-select-sm">
+                                <option value="Loan">Current Loans</option>
+                                <option value="User">User Counts</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="xxs-label">Group By</label>
+                            <select id="groupBy" class="form-select form-select-sm">
+                                <option value="Class">Class</option>
+                                <option value="Subject">Subject (Group)</option>
+                                <option value="MemberType">Member Type</option>
+                                <option value="CatalogueSubject">Catalogue Subject</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="xxs-label">User File</label>
+                            <select id="fileNumber" class="form-select form-select-sm">
+                                <option value="">-- All Users --</option>
+                                @foreach (var file in Model.UserFiles)
+                                {
+                                    <option value="@file.FileNumber">@file.FileDesc</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="overdueWrapper">
+                            <label class="xxs-label">Status</label>
+                            <div class="overdue-box p-1 rounded border d-flex align-items-center gap-2" style="background: #f8f9fa;">
+                                <input class="form-check-input mt-0 border-secondary" type="checkbox" id="overdueOnly" />
+                                <label class="small text-muted mb-0" for="overdueOnly" style="font-size: 0.75rem;">Overdue items only</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="height: 320px;">
+                        <canvas id="pieChart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <div class="dash-panel-footer">
-                <a href="#" class="footer-link">Download to Excel</a>
-                <a asp-controller="Reports" asp-action="Index" class="footer-link">Reports</a>
+            <!-- BOTTOM LEFT: DRILL DOWN -->
+            <div class="dash-panel">
+                <div class="dash-panel-header px-2 py-1 d-flex justify-content-between align-items-center">
+                    <span id="drillDownTitle" class="text-white small fw-bold">Borrower Details</span>
+                    <div id="drillDownActions" class="d-none">
+                        <button class="btn btn-xxs btn-light py-0 px-1" style="font-size: 0.7rem;">Excel</button>
+                    </div>
+                </div>
+                <div id="drillDownContainer" class="p-2" style="height: 550px; overflow-y: auto;">
+                    <div class="text-center py-5 text-muted small italic">
+                        Click on a chart segment to view member details.
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    
-    <div class="col-12 col-lg-6">
-        <div class="dash-panel">
-            <div class="dash-panel-header"></div>
-
-            <div class="dash-panel-body">
-                <div class="chart-shell">
+        <!-- RIGHT COLUMN -->
+        <div class="col-lg-6 d-flex flex-column gap-3">
+            
+            <!-- TOP RIGHT: COMPARISON -->
+            <div class="dash-panel">
+                <div class="dash-panel-header px-2 py-1">
+                    <span class="text-white small fw-bold">Comparison</span>
+                </div>
+                <div class="dash-panel-body p-2" style="height: 400px;">
                     <canvas id="barChart"></canvas>
                 </div>
+            </div>
 
-                <div class="date-row">
-                    <span class="date-label">Issue dates between</span>
-
-                    <input class="form-control form-control-sm date-input"
-                           type="date" name="from"
-                           value="@Model.FromDate.ToString("yyyy-MM-dd")" />
-
-                    <span class="date-label">and</span>
-
-                    <input class="form-control form-control-sm date-input"
-                           type="date" name="to"
-                           value="@Model.ToDate.ToString("yyyy-MM-dd")" />
-
-                    <button class="btn btn-primary btn-sm" type="submit">Search</button>
+            <!-- MIDDLE RIGHT: SECONDARY FILTERS + SEARCH -->
+            <div class="card shadow-sm border p-2 bg-light">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="xxs-label">From Date</label>
+                        <input id="fromDate" class="form-control form-control-sm" type="date" value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="xxs-label">To Date</label>
+                        <input id="toDate" class="form-control form-control-sm" type="date" value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-4 d-none" id="operatorWrapper">
+                        <label class="xxs-label">Operator</label>
+                        <select id="operatorName" class="form-select form-select-sm">
+                            <option value="">-- All --</option>
+                            @foreach (var op in Model.Operators)
+                            {
+                                <option value="@op.OperName">@op.OperName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button id="refreshBtn" class="btn btn-primary btn-sm w-100 fw-bold">Update All Graphs</button>
+                    </div>
                 </div>
+            </div>
 
-                
-                <div id="jsStatus" class="mt-2 small text-muted">
-                    JavaScript: waiting
+            <!-- BOTTOM RIGHT: TRENDS -->
+            <div class="dash-panel">
+                <div class="dash-panel-header px-2 py-1">
+                    <span id="trendTitle" class="text-white small fw-bold">Activity Trends</span>
+                </div>
+                <div class="dash-panel-body p-2" style="height: 550px;">
+                    <canvas id="lineChart"></canvas>
                 </div>
             </div>
         </div>
@@ -92,137 +141,203 @@
 </div>
 
 <style>
-    .filter-row {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        padding: 8px 12px;
-        flex-wrap: wrap;
-    }
-
-    .filter-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .filter-label {
-        margin: 0;
-        color: #6c757d;
-    }
-
-    .dash-panel {
-        border: 1px solid #d9e3f4;
-        border-radius: 3px;
-        overflow: hidden;
-        background: #fff;
-    }
-
-    .dash-panel-header {
-        height: 14px;
-        background: #1f66d1;
-    }
-
-    .dash-panel-body {
-        padding: 12px;
-    }
-
-    .chart-shell {
-        border: 1px dashed #c8d6f0;
-        border-radius: 3px;
-        height: 420px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #fbfdff;
-    }
-
-    .chart-shell canvas {
-        width: 100% !important;
-        height: 100% !important;
-    }
-
-    .dash-panel-footer {
-        padding: 8px 12px;
-        display: flex;
-        justify-content: flex-end;
-        gap: 16px;
-    }
-
-    .footer-link {
-        text-decoration: none;
-        font-size: 14px;
-    }
-
-    .footer-link:hover {
-        text-decoration: underline;
-    }
-
-    .date-row {
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-    }
-
-    .date-label {
-        color: #6c757d;
-        font-size: 14px;
-    }
-
-    .date-input {
-        width: 160px;
-    }
+    .dash-panel { border: 1px solid #dee2e6; border-radius: 4px; background: #fff; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); overflow: hidden; }
+    .dash-panel-header { background: #1f66d1; border-bottom: 1px solid #1a56b3; }
+    .italic { font-style: italic; }
+    .xxs-label { font-size: 0.65rem; color: #6c757d; text-transform: uppercase; font-weight: bold; margin-bottom: 2px; display: block; }
+    .btn-xxs { padding: 1px 4px; font-size: 0.7rem; line-height: 1.2; }
+    .overdue-box { border: 1px solid #ced4da !important; }
 </style>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        const status = document.getElementById("jsStatus");
-        if (status) status.textContent = "JavaScript: running";
+        let pieChart, barChart, lineChart;
+        let colorMap = {}; 
+        let currentPercentages = @Html.Raw(percentagesJson);
+        let currentFilter = 'Loan';
+        let currentDrillDown = { groupBy: '', groupValue: '', filter: '', overdueOnly: false, fileNumber: null, operatorName: '' };
 
-        const labels = @Html.Raw(labelsJson);
-        const values = @Html.Raw(valuesJson);
+        const initialLabels = @Html.Raw(labelsJson);
+        const initialValues = @Html.Raw(valuesJson);
+        const initialTrends = @Html.Raw(trendsJson);
 
-        const safeLabels = (labels && labels.length) ? labels : ["No data"];
-        const safeValues = (values && values.length) ? values : [0];
+        function getColor(label) {
+            if (colorMap[label]) return colorMap[label];
+            const r = Math.floor(Math.random() * 200) + 50;
+            const g = Math.floor(Math.random() * 200) + 50;
+            const b = Math.floor(Math.random() * 200) + 50;
+            colorMap[label] = `rgba(${r}, ${g}, ${b}, 0.7)`;
+            return colorMap[label];
+        }
 
-        const pieEl = document.getElementById("pieChart");
-        if (pieEl && typeof Chart !== "undefined") {
-            new Chart(pieEl.getContext("2d"), {
-                type: "pie",
+        function initCharts() {
+            const pieColors = initialLabels.map(l => getColor(l));
+
+            const tooltipOptions = {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        let value = context.raw || 0; 
+                        if (currentFilter === 'Loan' && currentPercentages.length > context.dataIndex) {
+                            let pct = currentPercentages[context.dataIndex];
+                            return `${label}: ${value} (${pct.toFixed(2)}% of library selection)`;
+                        }
+                        return `${label}: ${value}`;
+                    }
+                }
+            };
+
+            pieChart = new Chart(document.getElementById("pieChart").getContext("2d"), {
+                type: 'pie',
                 data: {
-                    labels: safeLabels,
-                    datasets: [{ data: safeValues }]
+                    labels: initialLabels.length ? initialLabels : ["No Data"],
+                    datasets: [{ data: initialValues.length ? initialValues : [0], backgroundColor: pieColors }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'top', labels: { boxWidth: 10, font: { size: 9 }, padding: 8 } },
+                        tooltip: tooltipOptions
+                    },
+                    onClick: (evt, activeElements) => onChartClick(evt, activeElements, pieChart)
+                }
+            });
+
+            barChart = new Chart(document.getElementById("barChart").getContext("2d"), {
+                type: 'bar',
+                data: {
+                    labels: initialLabels.length ? initialLabels : ["No Data"],
+                    datasets: [{ label: 'Counts', data: initialValues.length ? initialValues : [0], backgroundColor: pieColors }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: tooltipOptions },
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } },
+                        x: { ticks: { font: { size: 9 } } }
+                    },
+                    onClick: (evt, activeElements) => onChartClick(evt, activeElements, barChart)
+                }
+            });
+
+            const lineDatasets = initialTrends.map(t => ({
+                label: t.label,
+                data: t.counts,
+                borderColor: getColor(t.label),
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 2
+            }));
+
+            lineChart = new Chart(document.getElementById("lineChart").getContext("2d"), {
+                type: 'line',
+                data: { labels: initialTrends.length > 0 ? initialTrends[0].dates : [], datasets: lineDatasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 8 }, padding: 5 } } 
+                    },
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } },
+                        x: { ticks: { font: { size: 9 } } }
+                    }
                 }
             });
         }
 
-        const barEl = document.getElementById("barChart");
-        if (barEl && typeof Chart !== "undefined") {
-            new Chart(barEl.getContext("2d"), {
-                type: "bar",
-                data: {
-                    labels: safeLabels,
-                    datasets: [{
-                        label: "Issues (count)",
-                        data: safeValues,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } }
-                }
+        async function updateDashboard() {
+            currentFilter = document.getElementById("filterType").value;
+            const params = new URLSearchParams({
+                filter: currentFilter,
+                groupBy: document.getElementById("groupBy").value,
+                from: document.getElementById("fromDate").value,
+                to: document.getElementById("toDate").value,
+                overdueOnly: document.getElementById("overdueOnly").checked,
+                fileNumber: document.getElementById("fileNumber").value,
+                operatorName: document.getElementById("operatorName").value
             });
+
+            const response = await fetch(`/Dashboard/GetChartData?${params.toString()}`);
+            const data = await response.json();
+
+            currentPercentages = data.percentages;
+
+            const pieColors = data.labels.map(l => getColor(l));
+            pieChart.data.labels = data.labels;
+            pieChart.data.datasets[0].data = data.values;
+            pieChart.data.datasets[0].backgroundColor = pieColors;
+            pieChart.update();
+
+            barChart.data.labels = data.labels;
+            barChart.data.datasets[0].data = data.values;
+            barChart.data.datasets[0].backgroundColor = pieColors;
+            barChart.update();
+
+            lineChart.data.labels = data.trends.length > 0 ? data.trends[0].dates : [];
+            lineChart.data.datasets = data.trends.map(t => ({
+                label: t.label,
+                data: t.counts,
+                borderColor: getColor(t.label),
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 2
+            }));
+            document.getElementById("trendTitle").textContent = currentFilter === 'Loan' ? 'Loan Activity Trends by Group' : 'User Registration Trends by Group';
+            lineChart.update();
         }
+
+        async function onChartClick(evt, activeElements, chartInstance) {
+            if (activeElements && activeElements.length > 0) {
+                const index = activeElements[0].index;
+                const label = chartInstance.data.labels[index];
+                currentDrillDown = {
+                    groupBy: document.getElementById("groupBy").value,
+                    groupValue: label,
+                    filter: currentFilter,
+                    overdueOnly: document.getElementById("overdueOnly").checked,
+                    fileNumber: document.getElementById("fileNumber").value,
+                    operatorName: document.getElementById("operatorName").value
+                };
+                document.getElementById("drillDownTitle").textContent = `Borrower Details: ${label}`;
+                await loadDrillDownPage(1);
+            }
+        }
+
+        async function loadDrillDownPage(page) {
+            const container = document.getElementById("drillDownContainer");
+            container.style.opacity = "0.5";
+            const params = new URLSearchParams({ ...currentDrillDown, page: page });
+            const response = await fetch(`/Dashboard/GetDrillDown?${params.toString()}`);
+            const html = await response.text();
+            container.innerHTML = html;
+            container.style.opacity = "1";
+            document.getElementById("drillDownActions").classList.remove("d-none");
+        }
+
+        document.getElementById("refreshBtn").addEventListener("click", updateDashboard);
+        document.getElementById("filterType").addEventListener("change", (e) => {
+            const isUser = e.target.value === "User";
+            document.getElementById("overdueWrapper").classList.toggle("d-none", isUser);
+            document.getElementById("operatorWrapper").classList.toggle("d-none", !isUser);
+            
+            const groupBy = document.getElementById("groupBy");
+            const catSubjectOpt = groupBy.querySelector('option[value="CatalogueSubject"]');
+            if (isUser) {
+                if (groupBy.value === "CatalogueSubject") groupBy.value = "Class";
+                catSubjectOpt.disabled = true;
+                catSubjectOpt.classList.add("d-none");
+            } else {
+                catSubjectOpt.disabled = false;
+                catSubjectOpt.classList.remove("d-none");
+            }
+            updateDashboard();
+        });
+        document.getElementById("groupBy").addEventListener("change", updateDashboard);
+
+        initCharts();
     </script>
 }
