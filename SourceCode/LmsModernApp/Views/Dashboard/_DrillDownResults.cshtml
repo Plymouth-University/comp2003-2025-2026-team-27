@@ -1,0 +1,86 @@
+@model Lms.Data.PagedResult<Lms.Data.BorrowerDrillDownDto>
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover border mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Barcode</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Group</th>
+                <th>Class</th>
+                <th class="text-center">Live Loans</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Items.Any())
+            {
+                foreach (var bor in Model.Items)
+                {
+                    <tr>
+                        <td>@bor.Barcode</td>
+                        <td>@bor.Name</td>
+                        <td>@bor.Type</td>
+                        <td>@bor.Group</td>
+                        <td>@bor.Class</td>
+                        <td class="text-center">@bor.LoanCount</td>
+                        <td>
+                            <a asp-controller="Users" asp-action="Maintenance" asp-route-id="@bor.BorNo" class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size: 11px;">View</a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted italic py-3">No borrowers found in this segment.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model != null && Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-3 px-1">
+        <div class="small text-muted">
+            Showing @((Model.Page - 1) * Model.PageSize + 1) to @(Math.Min(Model.Page * Model.PageSize, Model.TotalItems)) of @Model.TotalItems results
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                    <a class="page-item-link page-link" href="javascript:void(0)" onclick="loadDrillDownPage(@(Model.Page - 1))">Previous</a>
+                </li>
+                
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (Model.TotalPages > 10)
+                    {
+                        // Simple sliding window for many pages
+                        if (i == 1 || i == Model.TotalPages || (i >= Model.Page - 2 && i <= Model.Page + 2))
+                        {
+                            <li class="page-item @(Model.Page == i ? "active" : "")">
+                                <a class="page-item-link page-link" href="javascript:void(0)" onclick="loadDrillDownPage(@i)">@i</a>
+                            </li>
+                        }
+                        else if (i == Model.Page - 3 || i == Model.Page + 3)
+                        {
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="page-item @(Model.Page == i ? "active" : "")">
+                            <a class="page-item-link page-link" href="javascript:void(0)" onclick="loadDrillDownPage(@i)">@i</a>
+                        </li>
+                    }
+                }
+
+                <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-item-link page-link" href="javascript:void(0)" onclick="loadDrillDownPage(@(Model.Page + 1))">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
