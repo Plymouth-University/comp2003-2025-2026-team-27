@@ -109,7 +109,7 @@ namespace LmsModernApp.Controllers
         // ── Details ──────────────────────────────────────────────────────────
 
         [HttpGet]
-        public async Task<IActionResult> Details(int catNo, string? libGroup)
+        public async Task<IActionResult> Details(int catNo, string? libGroup, string? returnUrl)
         {
             var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
 
@@ -119,6 +119,7 @@ namespace LmsModernApp.Controllers
             var model = new CatalogueDetailsViewModel
             {
                 CatNo = record.CatNo,
+                ReturnUrl = returnUrl,
                 Author = record.CatStr1,
                 Title = record.CatStr2,
                 Publisher = record.CatStr3,
@@ -134,6 +135,17 @@ namespace LmsModernApp.Controllers
             };
 
             return View(model);
+        }
+
+        // ── Duplicate ────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> Duplicate(int catNo, string? libGroup, string? returnUrl)
+        {
+            var newCatNo = await _catalogueRepository.DuplicateAsync(
+                catNo, libGroup, User.Identity?.Name ?? "UNKNOWN");
+
+            return RedirectToAction(nameof(Modify), new { catNo = newCatNo, returnUrl });
         }
 
         // ── Add ───────────────────────────────────────────────────────────────

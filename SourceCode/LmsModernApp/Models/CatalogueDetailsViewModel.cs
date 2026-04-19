@@ -11,6 +11,7 @@
         public string? TemplateId { get; set; }
         public string? CatRestrict { get; set; }
         public decimal? CatSecurity { get; set; }
+        public string? ReturnUrl { get; set; }
         public string? CreatedBy { get; set; }   // CatCreateOper
         public DateTime? CreatedDate { get; set; }   // CatCreateDatetime
         public string? LastModifiedBy { get; set; }   // CatOper

@@ -10,19 +10,22 @@
     @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
     :root {
-        --primary:       #1f66d1;
+        --primary: #1f66d1;
         --primary-light: #2b78ff;
-        --accent:        #d11b2d;
-        --surface:       #f8f9fc;
-        --border:        #dde3f0;
-        --text-main:     #1e2a45;
-        --text-muted:    #6b7a99;
-        --radius:        6px;
-        --shadow-sm:     0 1px 3px rgba(26,79,186,.10);
-        --shadow-md:     0 4px 16px rgba(26,79,186,.12);
+        --accent: #d11b2d;
+        --surface: #f8f9fc;
+        --border: #dde3f0;
+        --text-main: #1e2a45;
+        --text-muted: #6b7a99;
+        --radius: 6px;
+        --shadow-sm: 0 1px 3px rgba(26,79,186,.10);
+        --shadow-md: 0 4px 16px rgba(26,79,186,.12);
     }
 
-    .det-wrap, .det-wrap * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+    .det-wrap, .det-wrap * {
+        font-family: 'DM Sans', sans-serif;
+        box-sizing: border-box;
+    }
 
     .det-wrap {
         max-width: 700px;
@@ -47,14 +50,17 @@
         gap: 12px;
     }
 
-    .det-card-header h2 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #fff;
-    }
+        .det-card-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
 
-    .det-header-actions { display: flex; gap: 6px; }
+    .det-header-actions {
+        display: flex;
+        gap: 6px;
+    }
 
     .btn-hdr {
         padding: 5px 14px;
@@ -70,14 +76,36 @@
         transition: background .13s, color .13s;
     }
 
-    .btn-hdr-edit   { background: rgba(255,255,255,.20); color: #fff; }
-    .btn-hdr-edit:hover { background: rgba(255,255,255,.35); color: #fff; }
+    .btn-hdr-edit {
+        background: rgba(255,255,255,.20);
+        color: #fff;
+    }
 
-    .btn-hdr-delete { background: var(--accent); color: #fff; }
-    .btn-hdr-delete:hover { background: #b71525; color: #fff; }
+        .btn-hdr-edit:hover {
+            background: rgba(255,255,255,.35);
+            color: #fff;
+        }
 
-    .btn-hdr-back   { background: transparent; color: rgba(255,255,255,.75); border: 1px solid rgba(255,255,255,.35); }
-    .btn-hdr-back:hover { background: rgba(255,255,255,.12); color: #fff; }
+    .btn-hdr-delete {
+        background: var(--accent);
+        color: #fff;
+    }
+
+        .btn-hdr-delete:hover {
+            background: #b71525;
+            color: #fff;
+        }
+
+    .btn-hdr-back {
+        background: transparent;
+        color: rgba(255,255,255,.75);
+        border: 1px solid rgba(255,255,255,.35);
+    }
+
+        .btn-hdr-back:hover {
+            background: rgba(255,255,255,.12);
+            color: #fff;
+        }
 
     /* ── Field grid ── */
     .det-section-title {
@@ -113,10 +141,15 @@
         word-break: break-word;
     }
 
-    .det-label:last-of-type,
-    .det-value:last-of-type { border-bottom: none; }
+        .det-label:last-of-type,
+        .det-value:last-of-type {
+            border-bottom: none;
+        }
 
-    .det-empty { color: var(--text-muted); font-style: italic; }
+    .det-empty {
+        color: var(--text-muted);
+        font-style: italic;
+    }
 </style>
 
 <div class="det-wrap">
@@ -125,7 +158,7 @@
         <div class="det-card-header">
             <h2>Catalogue Record &mdash; Ref No @Model.CatNo</h2>
             <div class="det-header-actions">
-                <a asp-controller="Catalogue" asp-action="Index" class="btn-hdr btn-hdr-back">&#8592; Back</a>
+                <a href="@(string.IsNullOrEmpty(Model.ReturnUrl) ? Url.Action("Index", "Catalogue") : Model.ReturnUrl)" class="btn-hdr btn-hdr-back">&#8592; Back</a>
                 <a asp-controller="Catalogue" asp-action="Modify"
                    asp-route-catNo="@Model.CatNo"
                    asp-route-libGroup="@Model.LibGroup"

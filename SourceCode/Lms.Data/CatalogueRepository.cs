@@ -88,6 +88,36 @@ namespace Lms.Data
 
         // ── Write ─────────────────────────────────────────────────────────────
 
+        public async Task<int> DuplicateAsync(int catNo, string? libGroup, string? operName)
+        {
+            var original = await GetByRefNumberAsync(catNo, libGroup)
+                ?? throw new InvalidOperationException($"Catalogue record {catNo} not found.");
+
+            var nextNo = (await _context.Catalogues
+                .Where(c => c.CatNo != null)
+                .MaxAsync(c => (int?)c.CatNo) ?? 0) + 1;
+
+            var now = DateTime.Now;
+
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                INSERT INTO CATALOGUE
+                    (CAT_NO, CAT_STR1, CAT_STR2, CAT_STR3, CAT_STR4,
+                     CAT_KEY1, CAT_KEY2, CAT_KEY3, CAT_KEY4,
+                     CAT_LIB_GROUP, TEMPLATE_ID,
+                     CAT_RESTRICT, CAT_SECURITY,
+                     CAT_OPER, CAT_DATETIME,
+                     CAT_CREATE_OPER, CAT_CREATE_DATETIME)
+                VALUES
+                    ({nextNo}, {original.CatStr1}, {original.CatStr2}, {original.CatStr3}, {original.CatStr4},
+                     {original.CatKey1}, {original.CatKey2}, {original.CatKey3}, {original.CatKey4},
+                     {original.CatLibGroup}, {original.TemplateId},
+                     {original.CatRestrict}, {original.CatSecurity},
+                     {operName}, {now},
+                     {operName}, {now})");
+
+            return nextNo;
+        }
+
         public async Task<int> AddAsync(Catalogue cat)
         {
             var nextNo = (await _context.Catalogues
@@ -135,12 +165,11 @@ namespace Lms.Data
                     CAT_DATETIME        = {cat.CatDatetime}
                 WHERE CAT_NO = {cat.CatNo}");
         }
+
         public async Task DeleteAsync(int catNo)
         {
             await _context.Database.ExecuteSqlInterpolatedAsync(
                 $"DELETE FROM CATALOGUE WHERE CAT_NO = {catNo}");
         }
-
     }
-
 }
