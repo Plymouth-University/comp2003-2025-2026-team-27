@@ -1,0 +1,165 @@
+﻿@model LmsModernApp.ViewModels.CatalogueUploadPictureViewModel
+@{
+    ViewData["Title"] = "Remove Picture";
+    Layout = "_Layout";
+}
+
+<partial name="_DashboardHeader" />
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    .remove-wrap, .remove-wrap * {
+        font-family: 'DM Sans', sans-serif;
+        box-sizing: border-box;
+    }
+
+    .remove-wrap {
+        max-width: 520px;
+        margin: 32px auto;
+    }
+
+    .card {
+        background: #fff;
+        border: 1px solid #f5c6cb;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(209,27,45,.10);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: #d11b2d;
+        color: #fff;
+        padding: 14px 20px;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 24px 24px 20px;
+    }
+
+    .record-info {
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: #6b7a99;
+    }
+
+        .record-info strong {
+            color: #1e2a45;
+        }
+
+    .current-pic {
+        margin-bottom: 20px;
+    }
+
+        .current-pic img {
+            max-width: 100%;
+            max-height: 200px;
+            border: 1px solid #dde3f0;
+            border-radius: 4px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .current-pic .pic-label {
+            font-size: 11px;
+            color: #6b7a99;
+        }
+
+    .no-pic {
+        font-size: 13px;
+        color: #6b7a99;
+        margin-bottom: 20px;
+        font-style: italic;
+    }
+
+    .warning {
+        background: #fff3f4;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #d11b2d;
+        margin-bottom: 20px;
+    }
+
+    .btn-row {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+
+    .btn {
+        padding: 7px 18px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-danger {
+        background: #d11b2d;
+        color: #fff;
+        border: none;
+    }
+
+        .btn-danger:hover {
+            background: #b01525;
+        }
+
+    .btn-secondary {
+        background: #fff;
+        color: #1f66d1;
+        border: 1px solid #dde3f0;
+    }
+
+        .btn-secondary:hover {
+            background: #f1f4fb;
+        }
+</style>
+
+<div class="remove-wrap">
+    <div class="card">
+        <div class="card-header">Remove Picture — Ref No: @Model.CatNo</div>
+        <div class="card-body">
+
+            <div class="record-info">
+                <strong>@Model.Title</strong><br />
+                @Model.Author
+            </div>
+
+            @if (Model.HasPicture)
+            {
+                <div class="current-pic">
+                    <img src="/Catalogue/Picture?catNo=@Model.CatNo&libGroup=@Model.LibGroup" alt="Current picture" />
+                    <div class="pic-label">@Model.PicFilename</div>
+                </div>
+                <div class="warning">This will permanently remove the picture from this catalogue record.</div>
+            }
+            else
+            {
+                <div class="no-pic">This record does not have a picture.</div>
+            }
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="catNo" value="@Model.CatNo" />
+                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+
+                <div class="btn-row">
+                    <a href="@(Model.ReturnUrl ?? "/Catalogue/Index")" class="btn btn-secondary">Cancel</a>
+                    @if (Model.HasPicture)
+                    {
+                        <button type="submit" class="btn btn-danger">Remove Picture</button>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

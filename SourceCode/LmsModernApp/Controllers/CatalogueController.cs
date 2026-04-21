@@ -247,6 +247,129 @@ namespace LmsModernApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // ── Picture ───────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> Picture(int catNo, string? libGroup)
+        {
+            var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
+            if (record?.CatPicData == null || string.IsNullOrEmpty(record.CatPicType))
+                return NotFound();
+            return File(record.CatPicData, record.CatPicType);
+        }
+
+        // ── Upload Pictures ───────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> UploadPictures(int catNo, string? libGroup, string? returnUrl)
+        {
+            var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
+            if (record == null) return NotFound();
+
+            var model = new CatalogueUploadPictureViewModel
+            {
+                CatNo = record.CatNo,
+                Title = record.CatStr2,
+                Author = record.CatStr1,
+                LibGroup = record.CatLibGroup,
+                ReturnUrl = returnUrl,
+                HasPicture = record.CatPicData != null,
+                PicFilename = record.CatPicFilename
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadPictures(CatalogueUploadPictureViewModel model, IFormFile? picture)
+        {
+            if (picture == null || picture.Length == 0)
+            {
+                ModelState.AddModelError(string.Empty, "Please select a file to upload.");
+                return View(model);
+            }
+
+            using var ms = new MemoryStream();
+            await picture.CopyToAsync(ms);
+
+            await _catalogueRepository.SavePictureAsync(
+                model.CatNo!.Value,
+                picture.FileName,
+                picture.ContentType,
+                ms.ToArray());
+
+            return !string.IsNullOrEmpty(model.ReturnUrl)
+                ? Redirect(model.ReturnUrl)
+                : RedirectToAction(nameof(Index));
+        }
+
+        // ── Remove Picture ────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> RemovePicture(int catNo, string? libGroup, string? returnUrl)
+        {
+            var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
+            if (record == null) return NotFound();
+
+            var model = new CatalogueUploadPictureViewModel
+            {
+                CatNo = record.CatNo,
+                Title = record.CatStr2,
+                Author = record.CatStr1,
+                LibGroup = record.CatLibGroup,
+                ReturnUrl = returnUrl,
+                HasPicture = record.CatPicData != null,
+                PicFilename = record.CatPicFilename
+            };
+            return View(model);
+        }
+
+        // ── Export ───────────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> Export(int catNo, string? libGroup)
+        {
+            var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
+            if (record == null) return NotFound();
+
+            var headers = "Ref No,Title,Author,Publisher,Call Number,Lib Group,Created By,Created Date,Modified By,Modified Date";
+            var values = string.Join(",", new[]
+            {
+                CsvEscape(record.CatNo?.ToString()),
+                CsvEscape(record.CatStr2),
+                CsvEscape(record.CatStr1),
+                CsvEscape(record.CatStr3),
+                CsvEscape(record.CatStr4),
+                CsvEscape(record.CatLibGroup),
+                CsvEscape(record.CatCreateOper),
+                CsvEscape(record.CatCreateDatetime?.ToString("yyyy-MM-dd HH:mm:ss")),
+                CsvEscape(record.CatOper),
+                CsvEscape(record.CatDatetime?.ToString("yyyy-MM-dd HH:mm:ss"))
+            });
+
+            var csv = headers + "\r\n" + values + "\r\n";
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
+            var filename = $"catalogue_{catNo}.csv";
+
+            return File(bytes, "text/csv", filename);
+        }
+
+        private static string CsvEscape(string? value)
+        {
+            if (value == null) return "";
+            if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+                return "\"" + value.Replace("\"", "\"\"") + "\"";
+            return value;
+        }
+
+        [HttpPost, ActionName("RemovePicture")]
+        public async Task<IActionResult> RemovePictureConfirmed(int catNo, string? returnUrl)
+        {
+            await _catalogueRepository.RemovePictureAsync(catNo);
+            return !string.IsNullOrEmpty(returnUrl)
+                ? Redirect(returnUrl)
+                : RedirectToAction(nameof(Index));
+        }
+
         [HttpPost]
         public async Task<IActionResult> Modify(CatalogueEditViewModel model)
         {

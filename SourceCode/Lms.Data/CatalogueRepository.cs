@@ -171,5 +171,25 @@ namespace Lms.Data
             await _context.Database.ExecuteSqlInterpolatedAsync(
                 $"DELETE FROM CATALOGUE WHERE CAT_NO = {catNo}");
         }
+
+        public async Task SavePictureAsync(int catNo, string filename, string mimeType, byte[] data)
+        {
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE CATALOGUE SET
+                    CAT_PIC_FILENAME = {filename},
+                    CAT_PIC_TYPE     = {mimeType},
+                    CAT_PIC_DATA     = {data}
+                WHERE CAT_NO = {catNo}");
+        }
+
+        public async Task RemovePictureAsync(int catNo)
+        {
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE CATALOGUE SET
+                    CAT_PIC_FILENAME = NULL,
+                    CAT_PIC_TYPE     = NULL,
+                    CAT_PIC_DATA     = NULL
+                WHERE CAT_NO = {catNo}");
+        }
     }
 }

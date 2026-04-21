@@ -14,5 +14,7 @@ namespace Lms.Data
         Task<int> DuplicateAsync(int catNo, string? libGroup, string? operName);
         Task UpdateAsync(Catalogue catalogue);
         Task DeleteAsync(int catNo);
+        Task SavePictureAsync(int catNo, string filename, string mimeType, byte[] data);
+        Task RemovePictureAsync(int catNo);
     }
 }

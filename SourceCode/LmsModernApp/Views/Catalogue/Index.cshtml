@@ -10,19 +10,19 @@
     @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
     :root {
-        --primary:       #1f66d1;
+        --primary: #1f66d1;
         --primary-light: #2b78ff;
-        --accent:        #d11b2d;
-        --surface:       #f8f9fc;
-        --sidebar-bg:    #f1f4fb;
-        --border:        #dde3f0;
-        --text-main:     #1e2a45;
-        --text-muted:    #6b7a99;
-        --table-header:  #1f66d1;
-        --action-hover:  #e8edf8;
-        --radius:        6px;
-        --shadow-sm:     0 1px 3px rgba(26,79,186,.10);
-        --shadow-md:     0 4px 16px rgba(26,79,186,.12);
+        --accent: #d11b2d;
+        --surface: #f8f9fc;
+        --sidebar-bg: #f1f4fb;
+        --border: #dde3f0;
+        --text-main: #1e2a45;
+        --text-muted: #6b7a99;
+        --table-header: #1f66d1;
+        --action-hover: #e8edf8;
+        --radius: 6px;
+        --shadow-sm: 0 1px 3px rgba(26,79,186,.10);
+        --shadow-md: 0 4px 16px rgba(26,79,186,.12);
     }
 
     .catalogue-wrap, .catalogue-wrap * {
@@ -68,14 +68,15 @@
         transition: background .15s, border-color .15s, color .15s;
     }
 
-    .cat-sidebar a:hover {
-        background: var(--action-hover);
-        border-left-color: var(--primary-light);
-        color: var(--primary);
-    }
+        .cat-sidebar a:hover {
+            background: var(--action-hover);
+            border-left-color: var(--primary-light);
+            color: var(--primary);
+        }
 
     .cat-sidebar .dot {
-        width: 5px; height: 5px;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
         background: var(--border);
         flex-shrink: 0;
@@ -138,9 +139,22 @@
         transition: background .13s, color .13s, border-color .13s;
     }
 
-    .tb-btn:hover           { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .tb-btn.tb-danger       { color: var(--accent); border-color: #f5c6cb; }
-    .tb-btn.tb-danger:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .tb-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .tb-btn.tb-danger {
+            color: var(--accent);
+            border-color: #f5c6cb;
+        }
+
+            .tb-btn.tb-danger:hover {
+                background: var(--accent);
+                color: #fff;
+                border-color: var(--accent);
+            }
 
     /* ── Search panel ── */
     .search-panel {
@@ -159,29 +173,41 @@
         margin-bottom: 10px;
     }
 
-    .search-field        { display: flex; align-items: center; gap: 7px; }
-    .search-field label  { font-size: 12px; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
-
-    .search-field input,
-    .search-field select {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 13px;
-        padding: 5px 9px;
-        border: 1px solid var(--border);
-        border-radius: 4px;
-        background: var(--surface);
-        color: var(--text-main);
-        outline: none;
-        transition: border-color .15s, box-shadow .15s;
+    .search-field {
+        display: flex;
+        align-items: center;
+        gap: 7px;
     }
 
-    .search-field input:focus,
-    .search-field select:focus {
-        border-color: var(--primary-light);
-        box-shadow: 0 0 0 3px rgba(43,120,255,.12);
-    }
+        .search-field label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
 
-    .search-field input[type="text"] { width: 190px; }
+        .search-field input,
+        .search-field select {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            padding: 5px 9px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--text-main);
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+            .search-field input:focus,
+            .search-field select:focus {
+                border-color: var(--primary-light);
+                box-shadow: 0 0 0 3px rgba(43,120,255,.12);
+            }
+
+            .search-field input[type="text"] {
+                width: 190px;
+            }
 
     .search-btn {
         padding: 5px 16px;
@@ -196,22 +222,40 @@
         transition: background .13s;
     }
 
-    .search-btn:hover { background: var(--primary-light); }
+        .search-btn:hover {
+            background: var(--primary-light);
+        }
 
-    .meta-row            { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
-    .meta-field          { display: flex; align-items: center; gap: 6px; }
-    .meta-field label    { font-size: 11px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
-
-    .meta-field input {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 12px;
-        padding: 3px 7px;
-        border: 1px solid var(--border);
-        border-radius: 4px;
-        background: var(--surface);
-        width: 90px;
-        outline: none;
+    .meta-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
     }
+
+    .meta-field {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .meta-field label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .meta-field input {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            padding: 3px 7px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            width: 90px;
+            outline: none;
+        }
 
     /* ── Search feedback ── */
     .search-feedback {
@@ -220,11 +264,21 @@
         padding: 4px 0;
     }
 
-    .search-feedback.no-results { color: var(--accent); }
-    .search-feedback.has-results { color: #16a34a; font-weight: 500; }
+        .search-feedback.no-results {
+            color: var(--accent);
+        }
+
+        .search-feedback.has-results {
+            color: #16a34a;
+            font-weight: 500;
+        }
 
     /* ── Content area ── */
-    .content-area { display: flex; gap: 12px; flex: 1; }
+    .content-area {
+        display: flex;
+        gap: 12px;
+        flex: 1;
+    }
 
     .table-wrap {
         flex: 1;
@@ -235,29 +289,47 @@
         overflow: hidden;
     }
 
-    .cat-table              { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .cat-table thead tr     { background: var(--table-header); }
-
-    .cat-table thead th {
-        padding: 9px 13px;
-        text-align: left;
-        font-size: 11px;
-        font-weight: 600;
-        color: #fff;
-        letter-spacing: .05em;
-        text-transform: uppercase;
+    .cat-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
     }
 
-    .cat-table tbody tr          { border-bottom: 1px solid var(--border); transition: background .12s; }
-    .cat-table tbody tr:hover    { background: var(--action-hover); }
-    .cat-table tbody td          { padding: 9px 13px; font-size: 13px; color: var(--text-main); }
+        .cat-table thead tr {
+            background: var(--table-header);
+        }
 
-    .cat-table .empty-row td {
-        color: var(--text-muted);
-        font-style: italic;
-        text-align: center;
-        padding: 40px 0;
-    }
+        .cat-table thead th {
+            padding: 9px 13px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .cat-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .12s;
+        }
+
+            .cat-table tbody tr:hover {
+                background: var(--action-hover);
+            }
+
+        .cat-table tbody td {
+            padding: 9px 13px;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .cat-table .empty-row td {
+            color: var(--text-muted);
+            font-style: italic;
+            text-align: center;
+            padding: 40px 0;
+        }
 
     /* ── Right action panel ── */
     .action-panel {
@@ -286,10 +358,29 @@
         transition: background .13s, color .13s, border-color .13s, box-shadow .13s;
     }
 
-    .act-btn:hover            { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: var(--shadow-md); }
-    .act-btn.act-danger       { color: var(--accent); border-color: #f5c6cb; }
-    .act-btn.act-danger:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .act-divider              { border: none; border-top: 1px solid var(--border); margin: 2px 0; }
+        .act-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .act-btn.act-danger {
+            color: var(--accent);
+            border-color: #f5c6cb;
+        }
+
+            .act-btn.act-danger:hover {
+                background: var(--accent);
+                color: #fff;
+                border-color: var(--accent);
+            }
+
+    .act-divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2px 0;
+    }
 
     .tb-btn:disabled {
         opacity: .4;
@@ -327,9 +418,12 @@
         document.querySelectorAll('.result-row').forEach(r => r.classList.remove('row-selected'));
         row.classList.add('row-selected');
         selectedCatNo = row.dataset.catno;
-        document.getElementById('btn-modify').disabled    = false;
-        document.getElementById('btn-delete').disabled    = false;
-        document.getElementById('btn-duplicate').disabled = false;
+        document.getElementById('btn-modify').disabled           = false;
+        document.getElementById('btn-delete').disabled           = false;
+        document.getElementById('btn-duplicate').disabled        = false;
+        document.getElementById('btn-upload-pictures').disabled  = false;
+        document.getElementById('btn-remove-picture').disabled   = false;
+        document.getElementById('btn-export').disabled           = false;
     }
 
     function getSearchReturnUrl() {
@@ -362,10 +456,30 @@
 
     function clearSearch() {
         selectedCatNo = null;
-        document.getElementById('btn-modify').disabled    = true;
-        document.getElementById('btn-delete').disabled    = true;
-        document.getElementById('btn-duplicate').disabled = true;
+        document.getElementById('btn-modify').disabled           = true;
+        document.getElementById('btn-delete').disabled           = true;
+        document.getElementById('btn-duplicate').disabled        = true;
+        document.getElementById('btn-upload-pictures').disabled  = true;
+        document.getElementById('btn-remove-picture').disabled   = true;
+        document.getElementById('btn-export').disabled           = true;
         window.location.href = '/Catalogue/Index';
+    }
+
+    function goExport() {
+        if (selectedCatNo)
+            window.location.href = '/Catalogue/Export?catNo=' + encodeURIComponent(selectedCatNo);
+    }
+
+    function goUploadPictures() {
+        if (selectedCatNo)
+            window.location.href = '/Catalogue/UploadPictures?catNo=' + encodeURIComponent(selectedCatNo)
+                                 + '&returnUrl=' + encodeURIComponent(getSearchReturnUrl());
+    }
+
+    function goRemovePicture() {
+        if (selectedCatNo)
+            window.location.href = '/Catalogue/RemovePicture?catNo=' + encodeURIComponent(selectedCatNo)
+                                 + '&returnUrl=' + encodeURIComponent(getSearchReturnUrl());
     }
 </script>
 
@@ -402,10 +516,10 @@
             <a asp-controller="Catalogue" asp-action="Update" class="tb-btn">Update</a>
             <a asp-controller="Catalogue" asp-action="Delete" class="tb-btn tb-danger">Delete</a>
             <div class="tb-divider"></div>
-            <a asp-controller="Catalogue" asp-action="UploadPictures" class="tb-btn">Upload Pictures</a>
-            <a asp-controller="Catalogue" asp-action="RemovePicture" class="tb-btn">Remove Picture</a>
+            <button type="button" class="tb-btn" id="btn-upload-pictures" onclick="goUploadPictures()" disabled>Upload Pictures</button>
+            <button type="button" class="tb-btn tb-danger" id="btn-remove-picture" onclick="goRemovePicture()" disabled>Remove Picture</button>
             <div class="tb-divider"></div>
-            <a asp-controller="Catalogue" asp-action="Export" class="tb-btn">Export</a>
+            <button type="button" class="tb-btn" id="btn-export" onclick="goExport()" disabled>Export</button>
             <div class="tb-divider"></div>
             <button type="button" class="tb-btn" id="btn-first" onclick="goPage(0)" @(Model.Page == 0 ? "disabled" : "")>&#10218;&#10218; First</button>
             <button type="button" class="tb-btn" id="btn-prev" onclick="goPage(@(Model.Page - 1))" @(Model.Page == 0 ? "disabled" : "")>&#10218; Prev</button>
