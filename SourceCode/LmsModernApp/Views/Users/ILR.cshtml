@@ -1,0 +1,356 @@
+@model LmsModernApp.Models.BorrowerExtendedViewModel
+@{
+    ViewData["Title"] = "Individual Learning Record";
+}
+
+<style>
+    .ilr-fieldset { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; background-color: #f9f9f9; }
+    .ilr-fieldset legend { width: auto; padding: 0 10px; font-size: 1.1rem; font-weight: bold; color: #0d6efd; float: none; margin-bottom: 0; }
+    .ilr-label { font-weight: 600; color: #555; font-size: 0.9rem; }
+    .form-control-sm, .form-select-sm { border-radius: 0; border: 1px solid #ccc; }
+    .form-check-input { border: 1px solid #999; }
+    .toolbar-btn { font-weight: bold; text-decoration: none; margin-right: 15px; color: #0d6efd; }
+    .toolbar-btn:hover { text-decoration: underline; }
+</style>
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-3">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <form asp-action="SaveILR" method="post">
+            <input type="hidden" asp-for="Borrower.BorNo" />
+            <input type="hidden" asp-for="IlrData.BorNo" />
+            <input type="hidden" asp-for="IlrAdditionalData.Borno" />
+
+            <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                <div>
+                    <a asp-action="@(ViewBag.Origin ?? "UsersMoreOptions")" class="toolbar-btn">Go back</a>
+                    <button type="submit" class="btn btn-link p-0 toolbar-btn border-0">Save</button>
+                    <a href="#" class="toolbar-btn" onclick="alert('XML Export logic not yet implemented')">XML Export</a>
+                    <a href="#" class="toolbar-btn" data-bs-toggle="modal" data-bs-target="#uploadXmlModal">Upload XML File</a>
+                </div>
+                <div class="text-muted small">
+                    <a href="javascript:void(0)" onclick="document.body.style.fontSize='1.2rem'" class="text-decoration-none">+ Larger Font ></a> | 
+                    <a href="javascript:void(0)" onclick="document.body.style.fontSize='1rem'" class="text-decoration-none">+ Smaller Font ></a>
+                </div>
+            </div>
+
+            <h4 class="mb-3">ILR</h4>
+
+            <!-- 1. Live in the UK -->
+            <div class="ilr-fieldset shadow-sm">
+                <legend>Live in the UK</legend>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="ilr-label">1. Were you born in the UK and have you lived here ever since?</label>
+                        <select asp-for="IlrAdditionalData.Borninuk" class="form-select form-select-sm d-inline-block ms-2" style="width: 100px;">
+                            <option value="">--</option>
+                            <option value="true">YES</option>
+                            <option value="false">NO</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="ilr-label">2. How long have you lived in the UK?</label>
+                        <div class="d-inline-flex align-items-center ms-2">
+                            <input type="text" asp-for="IlrAdditionalData.Hllivedinuk" class="form-control form-control-sm" style="width: 100px;" placeholder="Y-M" />
+                            <span class="ms-2 small text-muted">(Format: Years-Months)</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="ilr-label">3. If you have been living in the UK or EEA for less than 3 years, please tell us: in which country(ies)</label>
+                        <input type="text" asp-for="IlrAdditionalData.Prelivedcountry" class="form-control form-control-sm d-inline-block mx-2" style="width: 250px;" />
+                        <label class="ilr-label">and for how long:</label>
+                        <input type="text" asp-for="IlrAdditionalData.Hllivedinprecountry" class="form-control form-control-sm d-inline-block ms-2" style="width: 100px;" placeholder="Y-M" />
+                    </div>
+                    <div class="col-12">
+                        <label class="ilr-label">4. Are you a UK passport holder?</label>
+                        <select asp-for="IlrAdditionalData.Ukpassport" class="form-select form-select-sm d-inline-block ms-2" style="width: 100px;">
+                            <option value="">--</option>
+                            <option value="true">YES</option>
+                            <option value="false">NO</option>
+                        </select>
+                        <span class="ms-2 small text-muted">(Tier 4 license conditions apply if NO)</span>
+                    </div>
+                    <div class="col-12">
+                        <label class="ilr-label">5. Do you need a visa or other permission to live in the UK?</label>
+                        <select asp-for="IlrAdditionalData.Visarequired" class="form-select form-select-sm d-inline-block ms-2" style="width: 100px;">
+                            <option value="">--</option>
+                            <option value="true">YES</option>
+                            <option value="false">NO</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="ilr-label">6. If YES, please tell us what type of visa</label>
+                        <input type="text" asp-for="IlrAdditionalData.Typeofvisa" class="form-control form-control-sm d-inline-block mx-2" style="width: 250px;" />
+                        <label class="ilr-label">and when it expires</label>
+                        <input type="date" name="IlrAdditionalData.Expiredateofvisa" value="@Model.IlrAdditionalData?.Expiredateofvisa?.ToString("yyyy-MM-dd")" class="form-control form-control-sm d-inline-block ms-2" style="width: 150px;" />
+                    </div>
+                    <div class="col-12">
+                        <label class="ilr-label">7. Country of Domicile:</label>
+                        <input type="text" asp-for="IlrAdditionalData.Countryofdomicile" class="form-control form-control-sm d-inline-block mx-2" style="width: 150px;" />
+                        <label class="ilr-label">Visa/Passport No:</label>
+                        <input type="text" asp-for="IlrAdditionalData.Visaorppno" class="form-control form-control-sm d-inline-block mx-2" style="width: 150px;" />
+                        <label class="ilr-label">Evidence Seen:</label>
+                        <input type="text" asp-for="IlrAdditionalData.Evidenceseen" class="form-control form-control-sm d-inline-block mx-2" style="width: 120px;" />
+                        <label class="ilr-label">Initials:</label>
+                        <input type="text" asp-for="IlrAdditionalData.Initials" class="form-control form-control-sm d-inline-block ms-2" style="width: 60px;" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Ethnic Origin -->
+            <div class="ilr-fieldset shadow-sm">
+                <legend>Ethnic Origin</legend>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="ilr-label d-block mb-2">Ethnicity</label>
+                        <div class="row">
+                            @{
+                                var ethnicities = new Dictionary<string, string> {
+                                    { "31", "English / Welsh / Scottish / Northern Irish / British" },
+                                    { "32", "Irish" }, { "33", "Gypsy or Irish Traveller" }, { "34", "Any Other White background" },
+                                    { "41", "Bangladeshi" }, { "42", "Chinese" }, { "43", "Any other Asian background" },
+                                    { "39", "Indian" }, { "36", "White and Black African" }, { "37", "White and Asian" },
+                                    { "38", "Any Other Mixed / multiple ethnic background" }, { "44", "African" },
+                                    { "45", "Caribbean" }, { "46", "Any other Black / African / Caribbean background" },
+                                    { "47", "Arab" }, { "98", "Any other ethnic group" }
+                                };
+                            }
+                            @foreach (var eth in ethnicities)
+                            {
+                                <div class="col-12 small">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" asp-for="IlrData.Ethnicity" value="@eth.Key" id="eth_@eth.Key">
+                                        <label class="form-check-label" for="eth_@eth.Key">@eth.Value</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="ilr-label">Please tell us your first language if it is not English:</label>
+                        <input type="text" asp-for="IlrAdditionalData.Firstlanguage" class="form-control form-control-sm mt-2" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Disability -->
+            <div class="ilr-fieldset shadow-sm">
+                <legend>Disability, Health problem, Learning Difficulty</legend>
+                <div class="mb-3">
+                    <label class="ilr-label">Do you have a disability, health problem or learning difficulty?</label>
+                    <select asp-for="IlrData.LlddhealthProb" class="form-select form-select-sm d-inline-block ms-2" style="width: 100px;">
+                        <option value="">--</option>
+                        <option value="1">YES</option>
+                        <option value="2">NO</option>
+                    </select>
+                    <div class="small text-muted mt-1">(If YES please circle all that apply and tick the main one in the detailed sub-system.)</div>
+                </div>
+                <div class="alert alert-secondary py-2 small">
+                    Note: Detailed LLDD category selection is managed via the Learning Support module.
+                </div>
+            </div>
+
+            <!-- 4. Previous Education -->
+            <div class="ilr-fieldset shadow-sm">
+                <legend>Previous Education</legend>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="ilr-label">If you are under 19 years old do you also attend another school/college?</label>
+                        <select class="form-select form-select-sm d-inline-block ms-2" style="width: 100px;">
+                            <option value="NO">NO</option>
+                            <option value="YES">YES</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="ilr-label">School/College</label>
+                        <input type="text" asp-for="IlrAdditionalData.Preeducation" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="ilr-label">Highest Level of Qualification</label>
+                        <select asp-for="IlrData.PriorAttain" class="form-select form-select-sm">
+                            <option value="">-- Select Level --</option>
+                            <option value="1">Level 1</option>
+                            <option value="2">Level 2</option>
+                            <option value="3">Level 3</option>
+                            <option value="4">Level 4+</option>
+                            <option value="97">Other</option>
+                            <option value="99">No qualifications</option>
+                        </select>
+                    </div>
+                    <div class="col-12 mt-4 border-top pt-2">
+                        <label class="ilr-label d-block mb-2">If you are under 24 years old, please tell us about your GCSE English and Mathematics:</label>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="small fw-bold">English Grade</label>
+                                <select asp-for="IlrData.EngGrade" class="form-select form-select-sm">
+                                    <option value="None">None</option>
+                                    @foreach (var grade in new[] { "A*", "A", "B", "C", "D", "E", "F", "G", "U" })
+                                    { <option value="@grade">@grade</option> }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Mathematics Grade</label>
+                                <select asp-for="IlrData.MathGrade" class="form-select form-select-sm">
+                                    <option value="None">None</option>
+                                    @foreach (var grade in new[] { "A*", "A", "B", "C", "D", "E", "F", "G", "U" })
+                                    { <option value="@grade">@grade</option> }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. How to Pay & Benefits -->
+            <div class="ilr-fieldset shadow-sm">
+                <legend>Fees and Concessions</legend>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="ilr-label d-block mb-2">If fees apply, who will pay your fees?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" asp-for="IlrAdditionalData.Whowillpay" value="I will pay" id="pay_self">
+                            <label class="form-check-label" for="pay_self">I will pay</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" asp-for="IlrAdditionalData.Whowillpay" value="My employer" id="pay_emp">
+                            <label class="form-check-label" for="pay_emp">My employer</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" asp-for="IlrAdditionalData.Whowillpay" value="My sponsor" id="pay_spo">
+                            <label class="form-check-label" for="pay_spo">My sponsor</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="ilr-label">Employer Authorisation?</label>
+                        <select asp-for="IlrAdditionalData.Employauth" class="form-select form-select-sm">
+                            <option value="false">NO</option>
+                            <option value="true">YES</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="ilr-label">Learner Loan advice?</label>
+                        <select asp-for="IlrAdditionalData.Advlladvice" class="form-select form-select-sm">
+                            <option value="false">NO</option>
+                            <option value="true">YES</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="ilr-label">Adv Loan applied for?</label>
+                        <select asp-for="IlrAdditionalData.Advlapplied" class="form-select form-select-sm">
+                            <option value="false">NO</option>
+                            <option value="true">YES</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 mt-3 border-top pt-2">
+                        <label class="ilr-label d-block fw-bold mb-2">State Benefits & NI</label>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <label class="small">NI Number</label>
+                                <input type="text" asp-for="IlrData.Ninumber" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small">Seen by</label>
+                                <input type="text" asp-for="IlrAdditionalData.Ninumseenby" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small">Verification Date</label>
+                                <input type="date" name="IlrAdditionalData.Ninumdate" value="@Model.IlrAdditionalData?.Ninumdate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="small fw-bold">Other Benefits / Declaration Notes:</label>
+                            <textarea asp-for="IlrAdditionalData.Statsbenefitnotes" class="form-control form-control-sm" rows="2"></textarea>
+                        </div>
+                        <div class="mt-2 row">
+                            <div class="col-md-4">
+                                <div class="form-check small">
+                                    <input class="form-check-input" type="checkbox" name="IlrAdditionalData.Depbenefit" value="true" @(Model.IlrAdditionalData?.Depbenefit == true ? "checked" : "")>
+                                    <label class="form-check-label">Dependent of someone on benefits?</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check small">
+                                    <input class="form-check-input" type="checkbox" name="IlrAdditionalData.Asylumseeker" value="true" @(Model.IlrAdditionalData?.Asylumseeker == true ? "checked" : "")>
+                                    <label class="form-check-label">Asylum seeker?</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check small">
+                                    <input class="form-check-input" type="checkbox" name="IlrAdditionalData.Lowincome" value="true" @(Model.IlrAdditionalData?.Lowincome == true ? "checked" : "")>
+                                    <label class="form-check-label">Household income below £16,190?</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Employment -->
+            <div class="ilr-fieldset shadow-sm">
+                <legend>Employment & Legal</legend>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="ilr-label">Just before you start your course, will you have been in full-time education or training?</label>
+                        <select asp-for="IlrAdditionalData.Fulltimeedu" class="form-select form-select-sm d-inline-block ms-2" style="width: 100px;">
+                            <option value="false">NO</option>
+                            <option value="true">YES</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="ilr-label">Employer Name</label>
+                        <input type="text" asp-for="IlrAdditionalData.Preemployername" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-5">
+                        <label class="ilr-label">Employer Address</label>
+                        <input type="text" asp-for="IlrAdditionalData.Preempaddress" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="ilr-label">Employer Postcode</label>
+                        <input type="text" asp-for="IlrAdditionalData.Preemppostcode" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-12 mt-3 border-top pt-2">
+                        <label class="ilr-label fw-bold d-block mb-2">Criminal Convictions</label>
+                        <p class="small text-muted mb-2">The government requires us to ask all our learners to declare if they have any unspent criminal convictions.</p>
+                        <div class="d-flex align-items-center">
+                            <label class="ilr-label">Do you have any unspent criminal convictions?</label>
+                            <select asp-for="IlrAdditionalData.Unspentcriminal" class="form-select form-select-sm d-inline-block ms-3" style="width: 100px;">
+                                <option value="false">NO</option>
+                                <option value="true">YES</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-5 text-center">
+                <button type="submit" class="btn btn-primary px-5 shadow-sm">Save ILR Record</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Upload XML Modal -->
+<div class="modal fade" id="uploadXmlModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload New ILR Import File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Select XML File</label>
+                    <input type="file" class="form-control" accept=".xml">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" disabled>Attach File</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,165 @@
+@model LmsModernApp.Models.BorrowerExtendedViewModel
+@{
+    ViewData["Title"] = "Borrower History";
+}
+
+<style>
+    .history-card { border-radius: 0; border-left: 4px solid #0d6efd; }
+    .table-history { font-size: 0.85rem; }
+    .table-history th { background-color: #f8f9fa; }
+    .badge-reading { background-color: #6f42c1; }
+    .badge-return { background-color: #198754; }
+</style>
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-3">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-primary mb-0"><i class="bi bi-clock-history me-2"></i>Borrower History</h4>
+            <a asp-action="@(ViewBag.Origin ?? "UsersMoreOptions")" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+
+        <!-- Borrower Summary Header (Reused Pattern) -->
+        <div class="card mb-4 shadow-sm border-0 bg-light">
+            <div class="card-body py-2">
+                <div class="row align-items-center">
+                    <div class="col-auto border-end">
+                        <span class="text-muted small d-block">Borrower</span>
+                        <strong>@Model.Borrower.BorGiven @Model.Borrower.BorSurname</strong>
+                    </div>
+                    <div class="col-auto border-end">
+                        <span class="text-muted small d-block">Barcode</span>
+                        <code>@Model.Borrower.BorBarNo</code>
+                    </div>
+                    <div class="col text-end">
+                        <span class="badge bg-primary">Loans: @(Model.Borrower.BorNoLoans ?? 0)</span>
+                        <span class="badge bg-info">Reserves: @(Model.Borrower.BorNoReserves ?? 0)</span>
+                        <span class="badge bg-danger">Balance: @(Model.Borrower.BorOwing?.ToString("C") ?? "£0.00")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabbed History View -->
+        <ul class="nav nav-tabs mb-3" id="historyTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans" type="button">Active Loans</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button">Return History</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button">General Audit</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="historyTabsContent">
+            <!-- Active Loans -->
+            <div class="tab-pane fade show active" id="loans" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover table-history border">
+                        <thead>
+                            <tr>
+                                <th>Barcode</th>
+                                <th>Title</th>
+                                <th>Due Date</th>
+                                <th>Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.OnLoan != null && Model.OnLoan.Any())
+                            {
+                                @foreach (var item in Model.OnLoan)
+                                {
+                                    <tr>
+                                        <td>@item.StkItemNo</td>
+                                        <td>@item.StkLine1</td>
+                                        <td class="@(item.StkDateDue < DateTime.Now ? "text-danger fw-bold" : "")">
+                                            @item.StkDateDue?.ToString("dd/MM/yyyy")
+                                        </td>
+                                        <td>@item.StkLocPerm</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">No active loans found.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Return History -->
+            <div class="tab-pane fade" id="returns" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover table-history border">
+                        <thead>
+                            <tr>
+                                <th>Date Returned</th>
+                                <th>Barcode</th>
+                                <th>Comments</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ReturnHistory != null && Model.ReturnHistory.Any())
+                            {
+                                @foreach (var item in Model.ReturnHistory)
+                                {
+                                    <tr>
+                                        <td>@item.ShDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@item.ShStkItemNo</td>
+                                        <td>@item.ShComments</td>
+                                        <td>@item.ShType</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">No return history found.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- General History -->
+            <div class="tab-pane fade" id="general" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover table-history border">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Item No</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.History != null && Model.History.Any())
+                            {
+                                @foreach (var item in Model.History)
+                                {
+                                    <tr>
+                                        <td>@item.BhDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td><span class="badge @(item.BhType == "READING" ? "badge-reading" : "bg-secondary")">@item.BhType</span></td>
+                                        <td>@item.BhComments</td>
+                                        <td>@item.StkItemNo</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">No general history records found.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

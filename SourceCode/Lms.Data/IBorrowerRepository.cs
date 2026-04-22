@@ -68,6 +68,46 @@ namespace Lms.Data
         Task<List<Lms.Data.Models.Delocal.Suburb>> GetSuburbsAsync();
         Task<bool> SaveAddressAsync(BorAddr address);
         Task<bool> DeleteAddressAsync(int borNo, int addrNo);
+
+        // Extended Management Actions
+        Task<bool> ApproveRegistrationAsync(int borNo);
+        Task<bool> RejectRegistrationAsync(int borNo);
+        Task<bool> ResetPinAsync(string barcode);
+        Task<bool> SetRelationshipAsync(int borNo, int? parentBorNo, string relType);
+        Task<bool> SetGroupRelationshipAsync(int borNo, int? groupParentBorNo);
+        Task<List<Borrower>> GetRelatedBorrowersAsync(int borNo);
+        Task<List<Borrower>> GetRelatedGroupBorrowersAsync(int borNo);
+
+        // History, Memos, Surveys, and ILR
+        Task<List<BorHistory>> GetBorrowerHistoryAsync(int borNo);
+        Task<List<StkItem>> GetItemsOnLoanAsync(string barcode);
+        Task<List<StkHistory>> GetItemReturnHistoryAsync(string barcode);
+        Task<List<BorMemo>> GetBorrowerMemosAsync(int borNo);
+        Task<int> GetMemoCountAsync(int borNo);
+        Task<bool> SaveBorrowerMemoAsync(BorMemo memo);
+        Task<bool> DeleteBorrowerMemoAsync(int borNo, string uniqueNo);
+        Task<List<LookupItem>> GetMemoTypesAsync();
+        Task<List<Survey>> GetAvailableSurveysAsync();
+        Task<BorSurvey?> GetBorrowerSurveyAsync(int borNo, int surveyId);
+        Task<Lms.Data.Models.Delib.IlrField?> GetBorrowerILRAsync(int borNo);
+        Task<Lms.Data.Models.Delib.IlrAdditionalField?> GetBorrowerILRAdditionalAsync(int borNo);
+        Task<bool> SaveBorrowerILRAsync(IlrField field, IlrAdditionalField additional);
+
+        // Picture Management
+        Task<ABorPicture?> GetBorrowerPictureAsync(int borNo);
+        Task<bool> SaveBorrowerPictureAsync(ABorPicture picture);
+        Task<bool> DeleteBorrowerPictureAsync(int borNo);
+
+        // Course Management
+        Task<List<BorCoursePeriod>> GetBorrowerCoursePeriodsAsync(int borNo);
+        Task<bool> SaveBorCoursePeriodAsync(BorCoursePeriod period);
+        Task<bool> DeleteBorCoursePeriodAsync(int borNo, string coCode, DateTime from, DateTime to);
+
+        // Relationships
+        Task<List<Borrower>> GetRelatedBorrowersByParentAsync(int parentBorNo);
+
+        // Finance
+        Task<List<FinTran>> GetFinTransactionsAsync(string barcode);
     }
 
     public class LookupItem

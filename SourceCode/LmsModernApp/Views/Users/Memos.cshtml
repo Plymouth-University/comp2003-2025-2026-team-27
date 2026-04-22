@@ -1,0 +1,113 @@
+@model LmsModernApp.Models.BorrowerExtendedViewModel
+@{
+    ViewData["Title"] = "Borrower Memos";
+}
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-3">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-primary mb-0"><i class="bi bi-journal-text me-2"></i>Borrower Memos</h4>
+            <a asp-action="@(ViewBag.Origin ?? "UsersMoreOptions")" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+
+        <div class="row">
+            <!-- Memo List -->
+            <div class="col-md-7">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white fw-bold">Existing Memos</div>
+                    <div class="list-group list-group-flush">
+                        @if (Model.Memos != null && Model.Memos.Any())
+                        {
+                            @foreach (var memo in Model.Memos)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <h6 class="mb-1 text-primary">@memo.BmType</h6>
+                                        <small class="text-muted">@memo.BmEffDate?.ToString("d") - @memo.BmEndDate?.ToString("d")</small>
+                                    </div>
+                                    <p class="mb-1 small text-dark">@memo.BmData</p>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="badge bg-light text-dark border">Display: @memo.BmDisplay</span>
+                                        <div>
+                                            <a asp-action="Memos" asp-route-uniqueNo="@memo.BmUniqueNo" class="btn btn-link btn-sm text-decoration-none">Edit</a>
+                                            <form asp-action="DeleteMemo" method="post" class="d-inline" onsubmit="return confirm('Delete this memo?')">
+                                                <input type="hidden" name="borNo" value="@memo.BmBorNo" />
+                                                <input type="hidden" name="uniqueNo" value="@memo.BmUniqueNo" />
+                                                <button type="submit" class="btn btn-link btn-sm text-danger text-decoration-none">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-4 text-center text-muted italic">No memos found for this borrower.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memo Form -->
+            <div class="col-md-5">
+                <div class="card shadow-sm border-primary">
+                    <div class="card-header bg-primary text-white fw-bold">
+                        @(string.IsNullOrEmpty(Model.SelectedMemo.BmUniqueNo) ? "Add New Memo" : "Edit Memo")
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="SaveMemo" method="post">
+                            <input type="hidden" asp-for="SelectedMemo.BmUniqueNo" name="BmUniqueNo" />
+                            <input type="hidden" asp-for="SelectedMemo.BmBorNo" name="BmBorNo" />
+                            <input type="hidden" asp-for="SelectedMemo.BmBorBarNo" name="BmBorBarNo" />
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Memo Type</label>
+                                <select asp-for="SelectedMemo.BmType" name="BmType" class="form-select form-select-sm" required>
+                                    <option value="">-- Select Type --</option>
+                                    @foreach (var type in Model.MemoTypes)
+                                    {
+                                        <option value="@type.Code">@type.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label class="form-label small fw-bold">Effective Date</label>
+                                    <input type="date" name="BmEffDate" class="form-control form-control-sm" value="@(Model.SelectedMemo.BmEffDate?.ToString("yyyy-MM-dd"))" required />
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small fw-bold">End Date</label>
+                                    <input type="date" name="BmEndDate" class="form-control form-control-sm" value="@(Model.SelectedMemo.BmEndDate?.ToString("yyyy-MM-dd"))" required />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Display Option</label>
+                                <select asp-for="SelectedMemo.BmDisplay" name="BmDisplay" class="form-select form-select-sm">
+                                    <option value="Y">Internal Only</option>
+                                    <option value="O">OPAC Only</option>
+                                    <option value="B">Both</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Memo Content</label>
+                                <textarea name="BmData" class="form-control form-control-sm" rows="5" required>@Model.SelectedMemo.BmData</textarea>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm">Save Memo</button>
+                                <a asp-action="Memos" class="btn btn-light btn-sm border">Clear / New</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

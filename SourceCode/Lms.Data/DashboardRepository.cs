@@ -138,7 +138,7 @@ WITH RawSubjectData AS (
     JOIN dbo.BORROWER b ON si.STK_BOR_BAR_NO = b.BOR_BAR_NO
     {fileJoin}
     LEFT JOIN DECAT.dbo.CATALOGUE_REFS cr ON si.STK_CAT_REF = cr.CAT_NO
-    LEFT JOIN DECAT.dbo.CAT_TAGS ct ON cr.CATTAG_NO = ct.TAG_NO AND ct.TAG_MARC IN ('600', '650', '651', '653')
+    LEFT JOIN DECAT.dbo.CAT_TAG ct ON cr.CATTAG_NO = ct.TAG_NO AND ct.TAG_MARC IN ('600', '650', '651', '653')
     LEFT JOIN DECAT.dbo.SF_DATA sd ON ct.TAG_UNIQUE_NO = sd.SF_UNIQUE_NO AND sd.SF = 'a'
     WHERE si.STK_ISS_DUE IS NOT NULL 
       AND si.STK_BOR_BAR_NO <> si.STK_ITEM_NO
@@ -332,7 +332,7 @@ OPTION (MAXRECURSION 32767);";
             if (groupBy == "CatalogueSubject")
             {
                 lookupJoin = @"LEFT JOIN DECAT.dbo.CATALOGUE_REFS cr ON si.STK_CAT_REF = cr.CAT_NO
-                                LEFT JOIN DECAT.dbo.CAT_TAGS ct ON cr.CATTAG_NO = ct.TAG_NO AND ct.TAG_MARC IN ('600', '650', '651', '653')
+                                LEFT JOIN DECAT.dbo.CAT_TAG ct ON cr.CATTAG_NO = ct.TAG_NO AND ct.TAG_MARC IN ('600', '650', '651', '653')
                                 LEFT JOIN DECAT.dbo.SF_DATA sd ON ct.TAG_UNIQUE_NO = sd.SF_UNIQUE_NO AND sd.SF = 'a'";
                 
                 valueFilter = groupValue == "null" 

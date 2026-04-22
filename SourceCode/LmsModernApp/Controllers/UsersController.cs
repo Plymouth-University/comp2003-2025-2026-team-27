@@ -28,7 +28,6 @@ namespace LmsModernApp.Controllers
             if (id.HasValue)
             {
                 HttpContext.Session.SetInt32("SelectedBorrowerId", id.Value);
-                // Ensure the navigation list is ready if we just came from a search/file
                 await PrepareNavigationListAsync();
             }
 
@@ -40,6 +39,7 @@ namespace LmsModernApp.Controllers
                 {
                     model.Borrower = borrower;
                     await PopulateAddressesAsync(model);
+                    ViewBag.MemoCount = await _borrowerRepository.GetMemoCountAsync(selectedId.Value);
                 }
             }
 
@@ -72,12 +72,8 @@ namespace LmsModernApp.Controllers
 
         private async Task PrepareNavigationListAsync()
         {
-            // Only rebuild the list if we don't have one or if the search criteria changed
             var criteriaJson = HttpContext.Session.GetString("SearchCriteria");
             if (string.IsNullOrEmpty(criteriaJson)) return;
-
-            var existingNavJson = HttpContext.Session.GetString("NavigationIds");
-            if (!string.IsNullOrEmpty(existingNavJson)) return;
 
             var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var criteria = System.Text.Json.JsonSerializer.Deserialize<BorrowerSearchCriteria>(criteriaJson, options);
@@ -86,7 +82,6 @@ namespace LmsModernApp.Controllers
             var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
             var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op!);
 
-            // Fetch ALL IDs for this search (limited to 5000 for safety)
             var results = await _borrowerRepository.SearchBorrowersAsync(
                 criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
                 criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
@@ -158,7 +153,6 @@ namespace LmsModernApp.Controllers
 
             var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
             
-            // Extract search criteria from the model (which uses the Borrower object as a container)
             var criteria = new BorrowerSearchCriteria
             {
                 BorBarNo = model.Borrower.BorBarNo,
@@ -171,11 +165,10 @@ namespace LmsModernApp.Controllers
                 BorLocation = model.Borrower.BorLocation,
                 BorSex = model.Borrower.BorSex,
                 BorDob = model.Borrower.BorDob.HasValue ? model.Borrower.BorDob.Value.ToDateTime(TimeOnly.MinValue) : null,
-                // Condition would need to come from a separate field in a real search model
                 BorDobCondition = Request.Form["BorDobCondition"].ToString() ?? "equal"
             };
 
-            Lms.Data.PagedResult<Lms.Data.BorrowerWithAddress> results = await _borrowerRepository.SearchBorrowersAsync(
+            var results = await _borrowerRepository.SearchBorrowersAsync(
                 criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
                 criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
                 criteria.BorDobCondition, criteria.FileNumber, allowedGroups, 1, 100, "BorSurname", "ASC");
@@ -192,9 +185,7 @@ namespace LmsModernApp.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Store criteria in session for the table view
             HttpContext.Session.SetString("SearchCriteria", System.Text.Json.JsonSerializer.Serialize(criteria));
-            
             return RedirectToAction(nameof(BorrowerResultTable));
         }
 
@@ -205,7 +196,6 @@ namespace LmsModernApp.Controllers
 
             var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
 
-            // 1. Retrieve criteria with Case-Insensitive options for reliability
             var criteriaJson = HttpContext.Session.GetString("SearchCriteria");
             var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var criteria = !string.IsNullOrEmpty(criteriaJson) 
@@ -214,21 +204,17 @@ namespace LmsModernApp.Controllers
 
             if (criteria == null) criteria = new BorrowerSearchCriteria();
 
-            // 2. Run Search
-            Lms.Data.PagedResult<Lms.Data.BorrowerWithAddress> results = await _borrowerRepository.SearchBorrowersAsync(
+            var results = await _borrowerRepository.SearchBorrowersAsync(
                 criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
                 criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
                 criteria.BorDobCondition, criteria.FileNumber, allowedGroups, page, 20, sort, order);
 
-            // 3. Set Permissions (Persist via TempData for redirects)
             if (criteria.FileNumber.HasValue && criteria.FileNumber > 0)
             {
                 var fileSet = await _borrowerRepository.GetFileSetByNumberAsync(criteria.FileNumber.Value);
                 if (fileSet != null)
                 {
                     ViewBag.CurrentFileDesc = fileSet.FileDesc;
-                    // Mirroring Legacy: Enable if FileNumber exists. 
-                    // (We can add specific profile checks here later)
                     TempData["CanRemoveFromFile"] = true;
                 }
             }
@@ -237,7 +223,6 @@ namespace LmsModernApp.Controllers
                 TempData["CanRemoveFromFile"] = false;
             }
 
-            // Fetch writable file sets for the "Save to File" modal
             ViewBag.WritableFileSets = await _borrowerRepository.GetWritableFileSetsAsync(op.OperName);
             ViewBag.CurrentFileNumber = criteria.FileNumber;
 
@@ -284,7 +269,6 @@ namespace LmsModernApp.Controllers
                 if (op == null) return Unauthorized();
                 var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
 
-                // Re-run the search WITHOUT paging to get every ID
                 var criteriaJson = HttpContext.Session.GetString("SearchCriteria");
                 var criteria = !string.IsNullOrEmpty(criteriaJson) 
                     ? System.Text.Json.JsonSerializer.Deserialize<BorrowerSearchCriteria>(criteriaJson)
@@ -292,7 +276,6 @@ namespace LmsModernApp.Controllers
 
                 if (criteria == null) criteria = new BorrowerSearchCriteria();
 
-                // Fetch ALL matching items (using a large page size)
                 var allResults = await _borrowerRepository.SearchBorrowersAsync(
                     criteria.BorBarNo, criteria.BorSurname, criteria.BorGiven, criteria.BorType, criteria.BorGroup,
                     criteria.BorClass, criteria.BorStatus, criteria.BorLocation, criteria.BorSex, criteria.BorDob,
@@ -324,7 +307,6 @@ namespace LmsModernApp.Controllers
         {
             if (fileNumber > 0)
             {
-                // We reuse the search logic to get all IDs currently in this file
                 var op = await _operatorRepository.GetOperatorByNameAsync(User.Identity?.Name ?? "");
                 if (op == null) return Unauthorized();
                 var allowedGroups = await _operatorRepository.GetAllowedGroupsAsync(op);
@@ -346,20 +328,11 @@ namespace LmsModernApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Search(string barcode)
         {
-            if (string.IsNullOrWhiteSpace(barcode))
-            {
-                return RedirectToAction(nameof(Index));
-            }
+            if (string.IsNullOrWhiteSpace(barcode)) return RedirectToAction(nameof(Index));
 
             var borrower = await _borrowerRepository.GetBorrowerByBarcodeAsync(barcode);
-            if (borrower != null)
-            {
-                HttpContext.Session.SetInt32("SelectedBorrowerId", borrower.BorNo);
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Borrower not found.";
-            }
+            if (borrower != null) HttpContext.Session.SetInt32("SelectedBorrowerId", borrower.BorNo);
+            else TempData["ErrorMessage"] = "Borrower not found.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -368,15 +341,10 @@ namespace LmsModernApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(BorrowerMaintenanceViewModel model)
         {
-            // Mandatory Field Validation
-            if (string.IsNullOrWhiteSpace(model.Borrower.BorBarNo))
-                ModelState.AddModelError("Borrower.BorBarNo", "Barcode is required.");
-            if (string.IsNullOrWhiteSpace(model.Borrower.BorSurname))
-                ModelState.AddModelError("Borrower.BorSurname", "Surname is required.");
-            if (string.IsNullOrWhiteSpace(model.Borrower.BorGiven))
-                ModelState.AddModelError("Borrower.BorGiven", "Given Name is required.");
-            if (string.IsNullOrWhiteSpace(model.Borrower.BorLocation))
-                ModelState.AddModelError("Borrower.BorLocation", "Location is required.");
+            if (string.IsNullOrWhiteSpace(model.Borrower.BorBarNo)) ModelState.AddModelError("Borrower.BorBarNo", "Barcode is required.");
+            if (string.IsNullOrWhiteSpace(model.Borrower.BorSurname)) ModelState.AddModelError("Borrower.BorSurname", "Surname is required.");
+            if (string.IsNullOrWhiteSpace(model.Borrower.BorGiven)) ModelState.AddModelError("Borrower.BorGiven", "Given Name is required.");
+            if (string.IsNullOrWhiteSpace(model.Borrower.BorLocation)) ModelState.AddModelError("Borrower.BorLocation", "Location is required.");
 
             if (ModelState.IsValid)
             {
@@ -413,11 +381,8 @@ namespace LmsModernApp.Controllers
                 TempData["SuccessMessage"] = "Borrower deleted successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            else
-            {
-                TempData["ErrorMessage"] = "Could not delete borrower. Ensure they have no active loans.";
-                return RedirectToAction(nameof(Index), new { id = id });
-            }
+            TempData["ErrorMessage"] = "Could not delete borrower. Ensure they have no active loans.";
+            return RedirectToAction(nameof(Index), new { id = id });
         }
 
         private async Task PopulateLookupsAsync(BorrowerMaintenanceViewModel model)
@@ -434,10 +399,7 @@ namespace LmsModernApp.Controllers
             model.AddressTypes = await _borrowerRepository.GetAddressTypesAsync();
         }
 
-        public IActionResult AdvancedSearch()
-        {
-            return View();
-        }
+        public IActionResult AdvancedSearch() => View();
 
         public async Task<IActionResult> FileList(string? creator, int page = 1, string sortBy = "FileDesc", string sortOrder = "ASC", string? searchTerm = null)
         {
@@ -445,9 +407,7 @@ namespace LmsModernApp.Controllers
             var selectedCreator = creator ?? currentOperator;
             var pageSize = 10;
 
-            // Use the improved Repository method with live paging and sorting
             var result = await _borrowerRepository.GetFileSetsByCreatorAsync(selectedCreator, page, pageSize, sortBy, sortOrder, searchTerm);
-            
             var allOperators = await _operatorRepository.GetAllOperatorsAsync();
             var operatorsLookup = allOperators.Select(o => new LookupItem { Code = o.OperName, Name = o.OperName }).ToList();
             operatorsLookup.Insert(0, new LookupItem { Code = "SYSGLOBALFILES", Name = "Global Files" });
@@ -483,13 +443,8 @@ namespace LmsModernApp.Controllers
 
         public async Task<IActionResult> QueryFile(int id)
         {
-            var criteria = new BorrowerSearchCriteria
-            {
-                FileNumber = id
-            };
-            
+            var criteria = new BorrowerSearchCriteria { FileNumber = id };
             HttpContext.Session.SetString("SearchCriteria", System.Text.Json.JsonSerializer.Serialize(criteria));
-            
             return RedirectToAction(nameof(BorrowerResultTable));
         }
 
@@ -501,25 +456,11 @@ namespace LmsModernApp.Controllers
             {
                 foreach (var catNo in selectedCatFileNumbers)
                 {
-                    // Manually fetch the specific date for this ID from the form
                     var dateStr = Request.Form[$"expiryDate_{catNo}"].ToString();
-                    DateTime expiryDate = DateTime.MaxValue; // Default if not provided
-                    
-                    if (DateTime.TryParse(dateStr, out var parsedDate))
-                    {
-                        expiryDate = parsedDate;
-                    }
-
-                    links.Add(new AFileSetLibCat
-                    {
-                        FileNumberCat = catNo,
-                        ExpirationDate = expiryDate,
-                        LastModifyBy = User.Identity?.Name ?? "SYSTEM",
-                        LastModifyOn = DateTime.Now
-                    });
+                    DateTime expiryDate = DateTime.TryParse(dateStr, out var parsedDate) ? parsedDate : DateTime.MaxValue;
+                    links.Add(new AFileSetLibCat { FileNumberCat = catNo, ExpirationDate = expiryDate, LastModifyBy = User.Identity?.Name ?? "SYSTEM", LastModifyOn = DateTime.Now });
                 }
             }
-
             await _borrowerRepository.SaveRelatedReadingListsAsync(borrowerFileNumber, links);
             TempData["SuccessMessage"] = "Reading list relationships updated.";
             return RedirectToAction(nameof(FileList));
@@ -544,17 +485,13 @@ namespace LmsModernApp.Controllers
         {
             var operatorName = User.Identity?.Name ?? "UNKNOWN";
             var existing = await _borrowerRepository.GetFileSetByNumberAsync(model.SelectedFileSet.FileNumber ?? 0);
-            
             if (existing != null && (existing.FileOper == operatorName || existing.FileOperAccess == "A"))
             {
                 existing.FileDesc = model.SelectedFileSet.FileDesc;
                 existing.FileOperAccess = model.SelectedFileSet.FileOperAccess;
-                
-                var success = await _borrowerRepository.SaveFileSetNameAsync(existing);
-                if (success) TempData["SuccessMessage"] = "File set updated.";
-                else TempData["ErrorMessage"] = "Error updating file set.";
+                await _borrowerRepository.SaveFileSetNameAsync(existing);
+                TempData["SuccessMessage"] = "File set updated.";
             }
-            
             return RedirectToAction(nameof(FileList), new { page = model.CurrentPage });
         }
 
@@ -564,13 +501,11 @@ namespace LmsModernApp.Controllers
         {
             var operatorName = User.Identity?.Name ?? "UNKNOWN";
             var existing = await _borrowerRepository.GetFileSetByNumberAsync(fileNumber);
-            
             if (existing != null && existing.FileOper == operatorName)
             {
                 await _borrowerRepository.EmptyFileSetAsync(fileNumber);
                 TempData["SuccessMessage"] = "File set emptied.";
             }
-            
             return RedirectToAction(nameof(FileList), new { page });
         }
 
@@ -580,29 +515,20 @@ namespace LmsModernApp.Controllers
         {
             var operatorName = User.Identity?.Name ?? "UNKNOWN";
             var existing = await _borrowerRepository.GetFileSetByNumberAsync(fileNumber);
-            
             if (existing != null && existing.FileOper == operatorName)
             {
                 await _borrowerRepository.DeleteFileSetAsync(fileNumber);
                 HttpContext.Session.Remove("SelectedFileNumber");
                 TempData["SuccessMessage"] = "File set deleted.";
             }
-            
             return RedirectToAction(nameof(FileList), new { page });
         }
 
-        public IActionResult ReadingList()
-        {
-            return View();
-        }
+        public IActionResult ReadingList() => View();
 
         public async Task<IActionResult> Addresses(int? borNo, string? type)
         {
-            if (borNo.HasValue)
-            {
-                HttpContext.Session.SetInt32("SelectedBorrowerId", borNo.Value);
-            }
-
+            if (borNo.HasValue) HttpContext.Session.SetInt32("SelectedBorrowerId", borNo.Value);
             var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
             var model = new BorrowerMaintenanceViewModel();
             await PopulateLookupsAsync(model);
@@ -614,59 +540,216 @@ namespace LmsModernApp.Controllers
                 {
                     model.Borrower = borrower;
                     model.Addresses = await _borrowerRepository.GetBorrowerAddressesAsync(selectedId.Value);
-
-                    if (type == "Correspondence")
-                    {
+                    if (type == "Correspondence") {
                         var main = await _borrowerRepository.GetMainAddressAsync(selectedId.Value);
-                        if (main != null) model.SelectedAddress = main;
-                        else model.SelectedAddress = new BorAddr { BaAddr1 = borrower.BorAddr1Txt, BaAddressTypeId = 0 };
+                        model.SelectedAddress = main ?? new BorAddr { BaAddr1 = borrower.BorAddr1Txt, BaAddressTypeId = 0 };
                     }
-                    else if (type == "Residential")
-                    {
-                        model.SelectedAddress = new BorAddr { BaAddr1 = borrower.BorAddr2Txt, BaAddressTypeId = 1 };
-                    }
-                    else if (type == "Guardian")
-                    {
-                        model.SelectedAddress = new BorAddr { BaAddr1 = borrower.BorAddr3Txt, BaAddressTypeId = 2 };
-                    }
+                    else if (type == "Residential") model.SelectedAddress = new BorAddr { BaAddr1 = borrower.BorAddr2Txt, BaAddressTypeId = 1 };
+                    else if (type == "Guardian") model.SelectedAddress = new BorAddr { BaAddr1 = borrower.BorAddr3Txt, BaAddressTypeId = 2 };
                 }
             }
-
             return View(model);
         }
 
-        public IActionResult Import()
+        public async Task<IActionResult> UsersMoreOptions()
         {
-            return View();
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            var model = new BorrowerMaintenanceViewModel();
+            await PopulateLookupsAsync(model);
+
+            if (selectedId.HasValue)
+            {
+                var borrower = await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value);
+                if (borrower != null)
+                {
+                    model.Borrower = borrower;
+                    await PopulateAddressesAsync(model);
+                    ViewBag.MemoCount = await _borrowerRepository.GetMemoCountAsync(selectedId.Value);
+                    if (!string.IsNullOrEmpty(borrower.BorBarNo)) {
+                        var onLoan = await _borrowerRepository.GetItemsOnLoanAsync(borrower.BorBarNo);
+                        model.Borrower.BorNoLoans = onLoan.Count(s => s.StkIsOnLoan == "Y");
+                    }
+                }
+            }
+            return View(model);
         }
+
+        [HttpPost] public async Task<IActionResult> ApproveBorrower(int id) { await _borrowerRepository.ApproveRegistrationAsync(id); return RedirectToAction(nameof(UsersMoreOptions)); }
+        [HttpPost] public async Task<IActionResult> RejectBorrower(int id) { await _borrowerRepository.RejectRegistrationAsync(id); return RedirectToAction(nameof(UsersMoreOptions)); }
+        [HttpPost] public async Task<IActionResult> ResetBorrowerPin(string barcode) { await _borrowerRepository.ResetPinAsync(barcode); return RedirectToAction(nameof(UsersMoreOptions)); }
+        [HttpPost] public async Task<IActionResult> SetAsParent(int id) { await _borrowerRepository.SetRelationshipAsync(id, null, "P"); return RedirectToAction(nameof(UsersMoreOptions)); }
+        [HttpPost] public async Task<IActionResult> BreakRelationship(int id) { await _borrowerRepository.SetRelationshipAsync(id, null, "N"); return RedirectToAction(nameof(UsersMoreOptions)); }
+
+        public async Task<IActionResult> SelectFileForBorrower(bool isRemove)
+        {
+            ViewBag.IsRemove = isRemove;
+            ViewBag.Files = await _borrowerRepository.GetWritableFileSetsAsync(User.Identity?.Name ?? "UNKNOWN");
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            if (!selectedId.HasValue) return RedirectToAction(nameof(Index));
+            return View(await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ProcessFileOperation(int fileNumber, int borNo, bool isRemove)
+        {
+            if (isRemove) await _borrowerRepository.RemoveBorrowersFromFileAsync(fileNumber, new List<int> { borNo });
+            else await _borrowerRepository.AddBorrowersToFileAsync(fileNumber, new List<int> { borNo });
+            return RedirectToAction(nameof(UsersMoreOptions));
+        }
+
+        public async Task<IActionResult> History(string? origin)
+        {
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            if (!selectedId.HasValue) return RedirectToAction(nameof(Index));
+            var borrower = await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value);
+            if (borrower == null) return RedirectToAction(nameof(Index));
+
+            var model = new BorrowerExtendedViewModel {
+                Borrower = borrower,
+                History = await _borrowerRepository.GetBorrowerHistoryAsync(selectedId.Value),
+                OnLoan = await _borrowerRepository.GetItemsOnLoanAsync(borrower.BorBarNo ?? ""),
+                ReturnHistory = await _borrowerRepository.GetItemReturnHistoryAsync(borrower.BorBarNo ?? "")
+            };
+            ViewBag.Origin = origin ?? "UsersMoreOptions";
+            return View(model);
+        }
+
+        public async Task<IActionResult> Memos(string? uniqueNo, string? origin)
+        {
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            if (!selectedId.HasValue) return RedirectToAction(nameof(Index));
+            var borrower = await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value);
+            if (borrower == null) return RedirectToAction(nameof(Index));
+
+            var memos = await _borrowerRepository.GetBorrowerMemosAsync(selectedId.Value);
+            var model = new BorrowerExtendedViewModel { Borrower = borrower, Memos = memos, MemoTypes = await _borrowerRepository.GetMemoTypesAsync() };
+
+            if (!string.IsNullOrEmpty(uniqueNo)) model.SelectedMemo = memos.FirstOrDefault(m => m.BmUniqueNo == uniqueNo) ?? new BorMemo();
+            else model.SelectedMemo = new BorMemo { BmEffDate = DateTime.Now, BmEndDate = DateTime.Now.AddYears(1), BmBorNo = selectedId.Value, BmBorBarNo = borrower.BorBarNo };
+
+            ViewBag.Origin = origin ?? "UsersMoreOptions";
+            return View(model);
+        }
+
+        [HttpPost] public async Task<IActionResult> SaveMemo(BorMemo model) { await _borrowerRepository.SaveBorrowerMemoAsync(model); return RedirectToAction(nameof(Memos)); }
+        [HttpPost] public async Task<IActionResult> DeleteMemo(int borNo, string uniqueNo) { await _borrowerRepository.DeleteBorrowerMemoAsync(borNo, uniqueNo); return RedirectToAction(nameof(Memos)); }
+
+        public async Task<IActionResult> Surveys(string? origin)
+        {
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            if (!selectedId.HasValue) return RedirectToAction(nameof(Index));
+            var borrower = await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value);
+            var model = new BorrowerExtendedViewModel { Borrower = borrower!, AvailableSurveys = await _borrowerRepository.GetAvailableSurveysAsync() };
+            ViewBag.Origin = origin ?? "UsersMoreOptions";
+            return View(model);
+        }
+
+        public async Task<IActionResult> ILR(string? origin)
+        {
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            if (!selectedId.HasValue) return RedirectToAction(nameof(Index));
+            var borrower = await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value);
+            if (borrower == null) return RedirectToAction(nameof(Index));
+
+            var model = new BorrowerExtendedViewModel { Borrower = borrower, IlrData = await _borrowerRepository.GetBorrowerILRAsync(selectedId.Value), IlrAdditionalData = await _borrowerRepository.GetBorrowerILRAdditionalAsync(selectedId.Value) };
+            ViewBag.Origin = origin ?? "UsersMoreOptions";
+            return View(model);
+        }
+
+        [HttpPost] [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveILR(BorrowerExtendedViewModel model)
+        {
+            if (model.Borrower.BorNo == 0) return RedirectToAction(nameof(Index));
+            if (model.IlrData != null) model.IlrData.BorNo = model.Borrower.BorNo;
+            if (model.IlrAdditionalData != null) model.IlrAdditionalData.Borno = model.Borrower.BorNo;
+            await _borrowerRepository.SaveBorrowerILRAsync(model.IlrData ?? new IlrField { BorNo = model.Borrower.BorNo }, model.IlrAdditionalData ?? new IlrAdditionalField { Borno = model.Borrower.BorNo });
+            return RedirectToAction(nameof(ILR));
+        }
+
+        public IActionResult Import() => View();
 
         [HttpPost]
         public async Task<IActionResult> SaveAddress(BorrowerMaintenanceViewModel model)
         {
             if (model.SelectedAddress != null)
             {
-                // Ensure BaBorNo is set
                 model.SelectedAddress.BaBorNo = model.Borrower.BorNo;
-                
-                // If it's a new address (BaAddrNo is null or 0), the repository should handle it.
-                // According to old logic: It checks if this is the only address of its type; if so, it automatically marks it as the "Main" address.
                 var existingAddresses = await _borrowerRepository.GetBorrowerAddressesAsync(model.Borrower.BorNo);
-                if (!existingAddresses.Any(a => a.BaAddressTypeId == model.SelectedAddress.BaAddressTypeId))
-                {
-                    model.SelectedAddress.BaMain = true;
-                }
-
+                if (!existingAddresses.Any(a => a.BaAddressTypeId == model.SelectedAddress.BaAddressTypeId)) model.SelectedAddress.BaMain = true;
                 await _borrowerRepository.SaveAddressAsync(model.SelectedAddress);
             }
-
             return RedirectToAction(nameof(Addresses), new { borNo = model.Borrower.BorNo });
         }
 
+        [HttpPost] public async Task<IActionResult> DeleteAddress(int borNo, int addrNo) { await _borrowerRepository.DeleteAddressAsync(borNo, addrNo); return RedirectToAction(nameof(Addresses), new { borNo = borNo }); }
+
         [HttpPost]
-        public async Task<IActionResult> DeleteAddress(int borNo, int addrNo)
+        public async Task<IActionResult> UploadPicture(IFormFile file, int borNo)
         {
-            await _borrowerRepository.DeleteAddressAsync(borNo, addrNo);
-            return RedirectToAction(nameof(Addresses), new { borNo = borNo });
+            if (file != null && file.Length > 0)
+            {
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    await file.CopyToAsync(ms);
+                    await _borrowerRepository.SaveBorrowerPictureAsync(new ABorPicture { BorNo = borNo, BorPicFilename = file.FileName, BorPicType = file.ContentType, BorPicData = ms.ToArray() });
+                }
+            }
+            return RedirectToAction(nameof(UsersMoreOptions));
+        }
+
+        [HttpGet] public async Task<IActionResult> GetPicture(int borNo) { var p = await _borrowerRepository.GetBorrowerPictureAsync(borNo); return p != null ? File(p.BorPicData, p.BorPicType) : NotFound(); }
+        [HttpGet] public async Task<IActionResult> GetQRCode(int borNo) { TempData["SuccessMessage"] = "QR Code interface stub."; return RedirectToAction(nameof(UsersMoreOptions)); }
+        [HttpPost] public async Task<IActionResult> RemovePicture(int borNo) { await _borrowerRepository.DeleteBorrowerPictureAsync(borNo); return RedirectToAction(nameof(UsersMoreOptions)); }
+
+        [HttpPost]
+        public async Task<IActionResult> ReRegistration(int borNo, DateTime newExpiryDate)
+        {
+            var b = await _borrowerRepository.GetBorrowerByIdAsync(borNo);
+            if (b != null) { b.BorRegdate = newExpiryDate; b.BorDatetime = DateTime.Now; await _borrowerRepository.SaveBorrowerAsync(b); }
+            return RedirectToAction(nameof(UsersMoreOptions));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AmendJoiningDate(int borNo, DateTime newJoiningDate)
+        {
+            var b = await _borrowerRepository.GetBorrowerByIdAsync(borNo);
+            if (b != null) { b.BorStartMship = newJoiningDate; b.BorDatetime = DateTime.Now; await _borrowerRepository.SaveBorrowerAsync(b); }
+            return RedirectToAction(nameof(UsersMoreOptions));
+        }
+
+        public async Task<IActionResult> ViewRelatedMembers(int id)
+        {
+            var related = await _borrowerRepository.GetRelatedBorrowersByParentAsync(id);
+            if (!related.Any()) return RedirectToAction(nameof(UsersMoreOptions));
+            HttpContext.Session.SetString("NavigationIds", System.Text.Json.JsonSerializer.Serialize(related.Select(r => r.BorNo).ToList()));
+            HttpContext.Session.SetString("SearchCriteria", System.Text.Json.JsonSerializer.Serialize(new BorrowerSearchCriteria()));
+            return RedirectToAction(nameof(BorrowerResultTable));
+        }
+
+        public async Task<IActionResult> SendEmail(int borNo) { var b = await _borrowerRepository.GetBorrowerByIdAsync(borNo); TempData["SuccessMessage"] = $"Email stub for {b?.BorEmail}."; return RedirectToAction(nameof(UsersMoreOptions)); }
+
+        public async Task<IActionResult> FinancialTransactions(string? origin)
+        {
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            if (!selectedId.HasValue) return RedirectToAction(nameof(Index));
+            var borrower = await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value);
+            if (borrower == null) return RedirectToAction(nameof(Index));
+
+            var model = new BorrowerExtendedViewModel { Borrower = borrower, FinanceTransactions = await _borrowerRepository.GetFinTransactionsAsync(borrower.BorBarNo ?? "") };
+            ViewBag.Origin = origin ?? "UsersMoreOptions";
+            return View(model);
+        }
+
+        public async Task<IActionResult> Courses(string? origin)
+        {
+            var selectedId = HttpContext.Session.GetInt32("SelectedBorrowerId");
+            if (!selectedId.HasValue) return RedirectToAction(nameof(Index));
+            var borrower = await _borrowerRepository.GetBorrowerByIdAsync(selectedId.Value);
+            if (borrower == null) return RedirectToAction(nameof(Index));
+
+            var model = new BorrowerExtendedViewModel { Borrower = borrower, CoursePeriods = await _borrowerRepository.GetBorrowerCoursePeriodsAsync(selectedId.Value) };
+            ViewBag.Origin = origin ?? "UsersMoreOptions";
+            return View(model);
         }
     }
 }

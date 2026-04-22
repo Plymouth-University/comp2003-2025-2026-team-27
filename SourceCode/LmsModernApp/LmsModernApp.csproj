@@ -12,6 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Context\**" />
+    <Content Remove="Context\**" />
+    <None Include="Context\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.10" />

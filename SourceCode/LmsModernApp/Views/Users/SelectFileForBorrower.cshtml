@@ -1,0 +1,52 @@
+@model Lms.Data.Models.Delib.Borrower
+@{
+    ViewData["Title"] = "Select File";
+    bool isRemove = ViewBag.IsRemove ?? false;
+}
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-3 justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header @(isRemove ? "bg-danger" : "bg-primary") text-white">
+                <h5 class="mb-0">
+                    <i class="bi @(isRemove ? "bi-folder-minus" : "bi-folder-plus") me-2"></i>
+                    @(isRemove ? "Remove from File" : "Add to File")
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4 text-center">
+                    <p class="mb-1">Borrower: <strong>@Model.BorGiven @Model.BorSurname</strong></p>
+                    <p class="text-muted small">Barcode: @Model.BorBarNo</p>
+                </div>
+
+                <form asp-action="ProcessFileOperation" method="post">
+                    <input type="hidden" name="borNo" value="@Model.BorNo" />
+                    <input type="hidden" name="isRemove" value="@(isRemove ? "true" : "false")" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Target File:</label>
+                        <select name="fileNumber" class="form-select" required>
+                            <option value="">-- Select a File --</option>
+                            @if (ViewBag.Files != null)
+                            {
+                                @foreach (var file in ViewBag.Files)
+                                {
+                                    <option value="@file.FileNumber">@file.FileDesc (@file.FileQty items)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="UsersMoreOptions" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn @(isRemove ? "btn-danger" : "btn-primary")">
+                            @(isRemove ? "Confirm Removal" : "Add to File")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

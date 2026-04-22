@@ -492,7 +492,7 @@ namespace Lms.Data
             // Get live loan counts for these barcodes
             var barcodes = results.Select(r => r.Borrower.BorBarNo).Where(b => b != null).ToList();
             var liveLoanCounts = await _delib.StkItems
-                .Where(s => s.StkBorBarNo != null && barcodes.Contains(s.StkBorBarNo))
+                .Where(s => s.StkBorBarNo != null && barcodes.Contains(s.StkBorBarNo) && s.StkIsOnLoan == "Y")
                 .GroupBy(s => s.StkBorBarNo)
                 .Select(g => new { Barcode = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.Barcode!, x => x.Count);
@@ -646,6 +646,280 @@ namespace Lms.Data
 
             _delib.BorAddrs.Remove(address);
             return await _delib.SaveChangesAsync() > 0;
+        }
+
+        // --- Extended Management Actions ---
+
+        public async Task<bool> ApproveRegistrationAsync(int borNo)
+        {
+            var borrower = await _delib.Borrowers.FindAsync(borNo);
+            if (borrower == null) return false;
+
+            borrower.BorApproved = "Y";
+            borrower.BorDatetime = DateTime.Now;
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> RejectRegistrationAsync(int borNo)
+        {
+            var borrower = await _delib.Borrowers.FindAsync(borNo);
+            if (borrower == null) return false;
+
+            borrower.BorApproved = "N";
+            borrower.BorRejectedEmail = "Y"; // Legacy flag for rejection
+            borrower.BorDatetime = DateTime.Now;
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> ResetPinAsync(string barcode)
+        {
+            var borrower = await _delib.Borrowers.FirstOrDefaultAsync(b => b.BorBarNo == barcode);
+            if (borrower == null) return false;
+
+            // Simple random 4-digit PIN for legacy compatibility
+            var rnd = new Random();
+            borrower.BorPin = rnd.Next(1000, 9999).ToString();
+            borrower.BorReqPinChange = "Y"; // Force change on next login
+            borrower.BorDatetime = DateTime.Now;
+            
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> SetRelationshipAsync(int borNo, int? parentBorNo, string relType)
+        {
+            var borrower = await _delib.Borrowers.FindAsync(borNo);
+            if (borrower == null) return false;
+
+            borrower.BorRelType = relType; // 'P'arent, 'C'hild, 'N'one
+            // In legacy, relationships are often managed via BOR_REF fields or specific child tables
+            // Here we update the main record
+            borrower.BorDatetime = DateTime.Now;
+
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> SetGroupRelationshipAsync(int borNo, int? groupParentBorNo)
+        {
+            var borrower = await _delib.Borrowers.FindAsync(borNo);
+            if (borrower == null) return false;
+
+            borrower.ParentBorNoSee = groupParentBorNo;
+            borrower.BorDatetime = DateTime.Now;
+
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<List<Borrower>> GetRelatedBorrowersAsync(int borNo)
+        {
+            // Find all borrowers where this is the parent or they share the same parent
+            var borrower = await _delib.Borrowers.FindAsync(borNo);
+            if (borrower == null) return new List<Borrower>();
+
+            // Simplified logic: find others with same reference or linked IDs
+            // Legacy apps use complex join logic; here we'll look for potential children
+            return await _delib.Borrowers
+                .Where(b => b.ParentBorNoSee == borNo || (borrower.ParentBorNoSee != null && b.ParentBorNoSee == borrower.ParentBorNoSee))
+                .Take(100)
+                .ToListAsync();
+        }
+
+        public async Task<List<Borrower>> GetRelatedGroupBorrowersAsync(int borNo)
+        {
+            return await _delib.Borrowers
+                .Where(b => b.PreBorNoSee == borNo)
+                .Take(100)
+                .ToListAsync();
+        }
+
+        // --- History, Memos, Surveys, and ILR ---
+
+        public async Task<List<BorHistory>> GetBorrowerHistoryAsync(int borNo)
+        {
+            var borrower = await GetBorrowerByIdAsync(borNo);
+            if (borrower == null || string.IsNullOrEmpty(borrower.BorBarNo)) return new List<BorHistory>();
+
+            return await _delib.BorHistories
+                .Where(h => h.BorBarNo == borrower.BorBarNo)
+                .OrderByDescending(h => h.BhDate)
+                .ToListAsync();
+        }
+
+        public async Task<List<StkItem>> GetItemsOnLoanAsync(string barcode)
+        {
+            return await _delib.StkItems
+                .Where(s => s.StkBorBarNo == barcode)
+                .OrderBy(s => s.StkDateDue)
+                .ToListAsync();
+        }
+
+        public async Task<List<StkHistory>> GetItemReturnHistoryAsync(string barcode)
+        {
+            return await _delib.StkHistories
+                .Where(h => h.ShBorNo == barcode && h.ShType == "RETURN")
+                .OrderByDescending(h => h.ShDate)
+                .Take(50)
+                .ToListAsync();
+        }
+
+        public async Task<List<BorMemo>> GetBorrowerMemosAsync(int borNo)
+        {
+            return await _delib.BorMemos
+                .Where(m => m.BmBorNo == borNo)
+                .OrderByDescending(m => m.BmEffDate)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetMemoCountAsync(int borNo)
+        {
+            return await _delib.BorMemos.CountAsync(m => m.BmBorNo == borNo);
+        }
+
+        public async Task<bool> SaveBorrowerMemoAsync(BorMemo memo)
+        {
+            if (string.IsNullOrEmpty(memo.BmUniqueNo))
+            {
+                memo.BmUniqueNo = Guid.NewGuid().ToString().Substring(0, 20);
+                _delib.BorMemos.Add(memo);
+            }
+            else
+            {
+                var existing = await _delib.BorMemos.FirstOrDefaultAsync(m => m.BmBorNo == memo.BmBorNo && m.BmUniqueNo == memo.BmUniqueNo);
+                if (existing == null) return false;
+                _delib.Entry(existing).CurrentValues.SetValues(memo);
+            }
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DeleteBorrowerMemoAsync(int borNo, string uniqueNo)
+        {
+            var memo = await _delib.BorMemos.FirstOrDefaultAsync(m => m.BmBorNo == borNo && m.BmUniqueNo == uniqueNo);
+            if (memo == null) return false;
+            _delib.BorMemos.Remove(memo);
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<List<LookupItem>> GetMemoTypesAsync()
+        {
+            return await _delocal.LibMemos
+                .OrderBy(m => m.LmDesc)
+                .Select(m => new LookupItem { Code = m.LmType, Name = m.LmDesc ?? m.LmType })
+                .ToListAsync();
+        }
+
+        public async Task<List<Survey>> GetAvailableSurveysAsync()
+        {
+            return await _delib.Surveys
+                .Include(s => s.SurveysQuestions)
+                    .ThenInclude(q => q.SurveysAnswers)
+                .ToListAsync();
+        }
+
+        public async Task<BorSurvey?> GetBorrowerSurveyAsync(int borNo, int surveyId)
+        {
+            return await _delib.BorSurveys
+                .Include(s => s.BorAnswers)
+                .FirstOrDefaultAsync(s => s.BorNo == borNo && s.SurveyId == surveyId);
+        }
+
+        public async Task<Lms.Data.Models.Delib.IlrField?> GetBorrowerILRAsync(int borNo)
+        {
+            return await _delib.IlrFields.FirstOrDefaultAsync(f => f.BorNo == borNo);
+        }
+
+        public async Task<Lms.Data.Models.Delib.IlrAdditionalField?> GetBorrowerILRAdditionalAsync(int borNo)
+        {
+            return await _delib.IlrAdditionalFields.FirstOrDefaultAsync(f => f.Borno == borNo);
+        }
+
+        public async Task<bool> SaveBorrowerILRAsync(IlrField field, IlrAdditionalField additional)
+        {
+            var existingField = await _delib.IlrFields.FirstOrDefaultAsync(f => f.BorNo == field.BorNo);
+            if (existingField == null) _delib.IlrFields.Add(field);
+            else _delib.Entry(existingField).CurrentValues.SetValues(field);
+
+            var existingAdd = await _delib.IlrAdditionalFields.FirstOrDefaultAsync(f => f.Borno == additional.Borno);
+            if (existingAdd == null) _delib.IlrAdditionalFields.Add(additional);
+            else _delib.Entry(existingAdd).CurrentValues.SetValues(additional);
+
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        // --- Picture Management ---
+
+        public async Task<ABorPicture?> GetBorrowerPictureAsync(int borNo)
+        {
+            return await _delib.ABorPictures.FirstOrDefaultAsync(p => p.BorNo == borNo);
+        }
+
+        public async Task<bool> SaveBorrowerPictureAsync(ABorPicture picture)
+        {
+            var existing = await _delib.ABorPictures.FirstOrDefaultAsync(p => p.BorNo == picture.BorNo);
+            if (existing == null)
+            {
+                _delib.ABorPictures.Add(picture);
+            }
+            else
+            {
+                _delib.Entry(existing).CurrentValues.SetValues(picture);
+            }
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DeleteBorrowerPictureAsync(int borNo)
+        {
+            var picture = await _delib.ABorPictures.FirstOrDefaultAsync(p => p.BorNo == borNo);
+            if (picture == null) return false;
+            _delib.ABorPictures.Remove(picture);
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        // --- Course Management ---
+
+        public async Task<List<BorCoursePeriod>> GetBorrowerCoursePeriodsAsync(int borNo)
+        {
+            return await _delib.BorCoursePeriods
+                .Where(p => p.BorNo == borNo)
+                .ToListAsync();
+        }
+
+        public async Task<bool> SaveBorCoursePeriodAsync(BorCoursePeriod period)
+        {
+            _delib.BorCoursePeriods.Add(period);
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DeleteBorCoursePeriodAsync(int borNo, string coCode, DateTime from, DateTime to)
+        {
+            var period = await _delib.BorCoursePeriods.FirstOrDefaultAsync(p => 
+                p.BorNo == borNo && 
+                p.BorCoCode == coCode && 
+                p.BorCpDateFrom == from && 
+                p.BorCpDateTo == to);
+            
+            if (period == null) return false;
+            _delib.BorCoursePeriods.Remove(period);
+            return await _delib.SaveChangesAsync() > 0;
+        }
+
+        // --- Relationships ---
+
+        public async Task<List<Borrower>> GetRelatedBorrowersByParentAsync(int parentBorNo)
+        {
+            return await _delib.Borrowers
+                .Where(b => b.ParentBorNoSee == parentBorNo)
+                .ToListAsync();
+        }
+
+        // --- Finance ---
+
+        public async Task<List<FinTran>> GetFinTransactionsAsync(string barcode)
+        {
+            if (string.IsNullOrEmpty(barcode)) return new List<FinTran>();
+            
+            return await _delib.FinTrans
+                .Where(t => t.FinBor == barcode)
+                .OrderByDescending(t => t.FinDate)
+                .ToListAsync();
         }
     }
 }

@@ -11,3 +11,6 @@
 
 # Configuration
 LmsModernApp/appsettings.Development.json
+
+# Local AI context
+Context/
