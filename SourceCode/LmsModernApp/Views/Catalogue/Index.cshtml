@@ -525,7 +525,6 @@
             <button type="button" class="tb-btn" id="btn-prev" onclick="goPage(@(Model.Page - 1))" @(Model.Page == 0 ? "disabled" : "")>&#10218; Prev</button>
             <button type="button" class="tb-btn" id="btn-next" onclick="goPage(@(Model.Page + 1))" @(Model.Page >= Model.TotalPages - 1 ? "disabled" : "")>Next &#10219;</button>
             <button type="button" class="tb-btn" id="btn-last" onclick="goPage(@(Model.TotalPages - 1))" @(Model.Page >= Model.TotalPages - 1 ? "disabled" : "")>Last &#10219;&#10219;</button>
-            <a asp-controller="Catalogue" asp-action="More" class="tb-btn">More</a>
         </div>
 
         <!-- Search panel -->
@@ -641,12 +640,9 @@
             <!-- Right action panel -->
             <div class="action-panel">
                 <a asp-controller="Catalogue" asp-action="Add" class="act-btn">Add</a>
-                <a asp-controller="Catalogue" asp-action="Insert" class="act-btn">Insert</a>
-                <a asp-controller="Catalogue" asp-action="Replace" class="act-btn">Replace</a>
                 <button type="button" class="act-btn" id="btn-modify" onclick="goModify()" disabled>Modify</button>
                 <hr class="act-divider" />
                 <button type="button" class="act-btn act-danger" id="btn-delete" onclick="goDelete()" disabled>Delete</button>
-                <a asp-controller="Catalogue" asp-action="Query" class="act-btn">Query</a>
             </div>
         </div>
 
