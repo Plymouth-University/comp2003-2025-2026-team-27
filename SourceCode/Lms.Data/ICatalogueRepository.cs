@@ -1,4 +1,4 @@
-﻿using Lms.Data.Models.Decat;
+using Lms.Data.Models.Decat;
 
 namespace Lms.Data
 {
@@ -16,5 +16,33 @@ namespace Lms.Data
         Task DeleteAsync(int catNo);
         Task SavePictureAsync(int catNo, string filename, string mimeType, byte[] data);
         Task RemovePictureAsync(int catNo);
+
+        // ── Stock Items ───────────────────────────────────────────────────────
+        Task<IEnumerable<StockItemDto>> GetStockItemsAsync(int catNo);
+        Task AddStockItemAsync(StockItemDto item);
+        Task DeleteStockItemAsync(string stkItemNo);
+    }
+
+    public class StockItemDto
+    {
+        public int? StkCatRef { get; set; }
+        public string? StkItemNo { get; set; }
+        public string? StkLine1 { get; set; }
+        public string? StkLine2 { get; set; }
+        public string? StkLine3 { get; set; }
+        public string? StkLine4 { get; set; }
+        public string? StkEdition { get; set; }
+        public string? StkVolume { get; set; }
+        public decimal? StkCost { get; set; }
+        public string? StkLocPerm { get; set; }
+        public string? StkLocTemp { get; set; }
+        public string? StkForLoan { get; set; }
+        public string? StkIsOnLoan { get; set; }
+        public string? StkStatsCode { get; set; }
+        public string? StkDescription { get; set; }
+        public string? StkLibGroup { get; set; }
+        public DateTime? StkDateRecd { get; set; }
+        public string? StkOper { get; set; }
+        public DateTime? StkDatetime { get; set; }
     }
 }
