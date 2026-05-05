@@ -38,17 +38,25 @@ namespace Lms.Data
             {
                 // Fetch and increment BorNo from BoSystab
                 var systab = await _delib.BoSystabs.FirstOrDefaultAsync();
+                int nextBorNo;
+                int currentBaAddrNo = 1;
+
                 if (systab == null)
                 {
-                    systab = new BoSystab { BorNo = 1, BaAddrNo = 1 };
-                    _delib.BoSystabs.Add(systab);
+                    nextBorNo = 1;
                 }
                 else
                 {
-                    systab.BorNo = (systab.BorNo ?? 0) + 1;
+                    // EF Core cannot update properties that are part of the primary key.
+                    // Since all properties of BoSystab are part of the primary key, we must delete and re-insert.
+                    currentBaAddrNo = systab.BaAddrNo ?? 1;
+                    nextBorNo = (systab.BorNo ?? 0) + 1;
+                    _delib.BoSystabs.Remove(systab);
                 }
                 
-                borrower.BorNo = systab.BorNo ?? 1;
+                _delib.BoSystabs.Add(new BoSystab { BorNo = nextBorNo, BaAddrNo = currentBaAddrNo });
+                
+                borrower.BorNo = nextBorNo;
                 _delib.Borrowers.Add(borrower);
             }
             else
@@ -121,7 +129,7 @@ namespace Lms.Data
         {
             return await _delocal.BorTitles
                 .OrderBy(t => t.OrderId)
-                .Select(t => new LookupItem { Code = t.BtTitle, Name = t.BtTitle })
+                .Select(t => new LookupItem { Code = t.BtTitle ?? "", Name = t.BtTitle ?? "" })
                 .ToListAsync();
         }
 
@@ -417,7 +425,7 @@ namespace Lms.Data
             }
 
             // 1. Security Filter: BOR_LIB_GROUP must be in allowedGroups
-            if (allowedGroups != null && allowedGroups.Any())
+            if (allowedGroups != null)
             {
                 query = query.Where(b => b.BorLibGroup != null && allowedGroups.Contains(b.BorLibGroup));
             }
@@ -605,16 +613,19 @@ namespace Lms.Data
                 // New address - get next BaAddrNo from BoSystab
                 var systab = await _delib.BoSystabs.FirstOrDefaultAsync();
                 int nextId;
-                if (systab == null)
+                int currentBorNo = 1;
+
+                if (systab != null)
                 {
-                    systab = new BoSystab { BorNo = 1, BaAddrNo = 1 };
-                    _delib.BoSystabs.Add(systab);
-                    nextId = 1;
+                    currentBorNo = systab.BorNo ?? 1;
+                    nextId = (systab.BaAddrNo ?? 0) + 1;
+                    // EF Core cannot update properties that are part of the primary key.
+                    // Since all properties of BoSystab are part of the primary key, we must delete and re-insert.
+                    _delib.BoSystabs.Remove(systab);
                 }
                 else
                 {
-                    systab.BaAddrNo = (systab.BaAddrNo ?? 0) + 1;
-                    nextId = systab.BaAddrNo.Value;
+                    nextId = 1;
                 }
                 
                 // Safety: check if this ID already exists in BOR_ADDR (systab might be out of sync)
@@ -622,8 +633,9 @@ namespace Lms.Data
                 if (nextId <= maxExisting)
                 {
                     nextId = maxExisting + 1;
-                    systab.BaAddrNo = nextId; // Sync systab back up
                 }
+
+                _delib.BoSystabs.Add(new BoSystab { BorNo = currentBorNo, BaAddrNo = nextId });
 
                 address.BaAddrNo = nextId;
                 _delib.BorAddrs.Add(address);
@@ -906,7 +918,8 @@ namespace Lms.Data
         public async Task<List<Borrower>> GetRelatedBorrowersByParentAsync(int parentBorNo)
         {
             return await _delib.Borrowers
-                .Where(b => b.ParentBorNoSee == parentBorNo)
+                .Where(b => b.ParentBorNoSee == parentBorNo || b.BorNo == parentBorNo)
+                .OrderBy(b => b.BorSurname)
                 .ToListAsync();
         }
 

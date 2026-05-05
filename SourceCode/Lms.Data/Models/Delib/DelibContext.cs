@@ -2677,9 +2677,9 @@ public partial class DelibContext : DbContext
 
         modelBuilder.Entity<BoSystab>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("BO_SYSTAB");
+            entity.HasKey(e => new { e.BorNo, e.BaAddrNo });
+
+            entity.ToTable("BO_SYSTAB");
 
             entity.Property(e => e.BaAddrNo).HasColumnName("BA_ADDR_NO");
             entity.Property(e => e.BorNo).HasColumnName("BOR_NO");
@@ -3456,9 +3456,9 @@ public partial class DelibContext : DbContext
 
         modelBuilder.Entity<BorMemo>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("BOR_MEMOS");
+            entity.HasKey(e => e.BmUniqueNo);
+
+            entity.ToTable("BOR_MEMOS");
 
             entity.HasIndex(e => e.BmBorBarNo, "BM_BORBARNOX");
 
@@ -5606,9 +5606,9 @@ public partial class DelibContext : DbContext
 
         modelBuilder.Entity<FileSetSystab>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("FILE_SET_SYSTAB");
+            entity.HasKey(e => e.FileNumber);
+
+            entity.ToTable("FILE_SET_SYSTAB");
 
             entity.Property(e => e.FileNumber).HasColumnName("FILE_NUMBER");
         });
@@ -6231,9 +6231,9 @@ public partial class DelibContext : DbContext
 
         modelBuilder.Entity<IlrAdditionalField>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("ILR_ADDITIONAL_FIELD");
+            entity.HasKey(e => e.Borno);
+
+            entity.ToTable("ILR_ADDITIONAL_FIELD");
 
             entity.Property(e => e.Advlapplied).HasColumnName("ADVLAPPLIED");
             entity.Property(e => e.Advlladvice).HasColumnName("ADVLLADVICE");
@@ -6321,9 +6321,9 @@ public partial class DelibContext : DbContext
 
         modelBuilder.Entity<IlrField>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("ILR_FIELD");
+            entity.HasKey(e => e.BorNo);
+
+            entity.ToTable("ILR_FIELD");
 
             entity.Property(e => e.EmpStatusMonitor)
                 .HasMaxLength(10)

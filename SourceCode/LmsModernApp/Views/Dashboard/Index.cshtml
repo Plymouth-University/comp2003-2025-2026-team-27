@@ -43,7 +43,6 @@
                                 <option value="Class">Class</option>
                                 <option value="Subject">Subject (Group)</option>
                                 <option value="MemberType">Member Type</option>
-                                <option value="CatalogueSubject">Catalogue Subject</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -324,16 +323,6 @@
             document.getElementById("overdueWrapper").classList.toggle("d-none", isUser);
             document.getElementById("operatorWrapper").classList.toggle("d-none", !isUser);
             
-            const groupBy = document.getElementById("groupBy");
-            const catSubjectOpt = groupBy.querySelector('option[value="CatalogueSubject"]');
-            if (isUser) {
-                if (groupBy.value === "CatalogueSubject") groupBy.value = "Class";
-                catSubjectOpt.disabled = true;
-                catSubjectOpt.classList.add("d-none");
-            } else {
-                catSubjectOpt.disabled = false;
-                catSubjectOpt.classList.remove("d-none");
-            }
             updateDashboard();
         });
         document.getElementById("groupBy").addEventListener("change", updateDashboard);
