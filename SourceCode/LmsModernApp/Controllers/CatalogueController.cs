@@ -492,11 +492,17 @@ namespace LmsModernApp.Controllers
                 StkDatetime = now
             };
 
-            await _catalogueRepository.AddStockItemAsync(item);
-
-            TempData["SuccessMessage"] = $"Stock item '{model.StkItemNo}' added successfully.";
-
-            return RedirectToAction(nameof(FileList), new { catNo = model.CatNo, libGroup = model.LibGroup });
+            try
+            {
+                await _catalogueRepository.AddStockItemAsync(item);
+                TempData["SuccessMessage"] = $"Stock item '{model.StkItemNo}' added successfully.";
+                return RedirectToAction(nameof(FileList), new { catNo = model.CatNo, libGroup = model.LibGroup });
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError("StkItemNo", "This Item No already exists. Please use a unique Item No.");
+                return View(model);
+            }
         }
 
         // ── Delete Stock Item ─────────────────────────────────────────────────
