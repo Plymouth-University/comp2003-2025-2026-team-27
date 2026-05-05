@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Import Users Using Template";
+}
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-4">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Import">Import Hub</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Import by Template</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Import Users via Template</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="ProcessImportTemplate" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="templateId" class="form-label">Select Template</label>
+                        <select id="templateId" name="templateId" class="form-select" required>
+                            <option value="">-- Select a template --</option>
+                            @if (ViewBag.Templates != null)
+                            {
+                                foreach (var template in (List<Lms.Data.Models.Delocal.ImportBorTemplate>)ViewBag.Templates)
+                                {
+                                    <option value="@template.TemplateId">@template.TemplateName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="importFile" class="form-label">Data File (CSV/Excel)</label>
+                        <input type="file" class="form-control" id="importFile" name="importFile" accept=".csv,.xls,.xlsx">
+                        <div class="form-text text-muted">
+                            Ensure your file structure matches the selected template.
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Import" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Start Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

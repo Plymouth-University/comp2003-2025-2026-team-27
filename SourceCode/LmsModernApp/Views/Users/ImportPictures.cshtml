@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Import User Pictures";
+}
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-4">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Import">Import Hub</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Import Pictures</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Batch Import User Pictures</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="ProcessImportPictures" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="pictureZip" class="form-label">ZIP Archive</label>
+                        <input type="file" class="form-control" id="pictureZip" name="pictureZip" accept=".zip">
+                        <div class="form-text text-muted">
+                            Upload a .zip file where each image is named after the user's barcode (e.g., 10001.jpg).
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Import" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-success">Upload and Process</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

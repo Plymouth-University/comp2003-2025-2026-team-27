@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Import Multiple User Classes";
+}
+
+<partial name="_DashboardHeader" />
+
+<div class="row mt-4">
+    <partial name="_UsersSidebar" />
+
+    <div class="col-md-10">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Import">Import Hub</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Import Classes</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0 text-dark">Update User Classes via File</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="ProcessImportClass" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="classFile" class="form-label">Mapping File (CSV)</label>
+                        <input type="file" class="form-control" id="classFile" name="classFile" accept=".csv">
+                        <div class="form-text text-muted">
+                            CSV format: [Barcode],[New Class Code]
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Import" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-warning text-dark">Update Classes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

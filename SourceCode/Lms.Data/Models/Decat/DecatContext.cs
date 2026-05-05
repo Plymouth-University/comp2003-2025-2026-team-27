@@ -960,9 +960,9 @@ public partial class DecatContext : DbContext
 
         modelBuilder.Entity<Catalogue>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("CATALOGUE", tb => tb.HasTrigger("trg_catalogue_audit"));
+            entity.HasKey(e => e.CatNo);
+
+            entity.ToTable("CATALOGUE", tb => tb.HasTrigger("trg_catalogue_audit"));
 
             entity.HasIndex(e => e.CatNo, "CATNOX").IsUnique();
 

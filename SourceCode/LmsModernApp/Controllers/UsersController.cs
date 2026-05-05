@@ -13,11 +13,13 @@ namespace LmsModernApp.Controllers
     {
         private readonly IBorrowerRepository _borrowerRepository;
         private readonly IOperatorRepository _operatorRepository;
+        private readonly IBorrowerImportService _importService;
 
-        public UsersController(IBorrowerRepository borrowerRepository, IOperatorRepository operatorRepository)
+        public UsersController(IBorrowerRepository borrowerRepository, IOperatorRepository operatorRepository, IBorrowerImportService importService)
         {
             _borrowerRepository = borrowerRepository;
             _operatorRepository = operatorRepository;
+            _importService = importService;
         }
 
         public async Task<IActionResult> Index(int? id)
@@ -667,6 +669,59 @@ namespace LmsModernApp.Controllers
         }
 
         public IActionResult Import() => View();
+
+        public async Task<IActionResult> ImportTemplate()
+        {
+            ViewBag.Templates = await _importService.GetAvailableTemplatesAsync();
+            return View();
+        }
+        public IActionResult ImportPictures() => View();
+        public IActionResult ImportGroup() => View();
+        public IActionResult ImportClass() => View();
+
+        [HttpPost]
+        public async Task<IActionResult> ProcessImportTemplate(int templateId, IFormFile importFile)
+        {
+            if (importFile == null) return RedirectToAction(nameof(Import));
+            using var stream = importFile.OpenReadStream();
+            var result = await _importService.ProcessImportTemplateAsync(templateId, stream);
+            if (result.Success) TempData["SuccessMessage"] = result.Message;
+            else TempData["ErrorMessage"] = result.Message;
+            return RedirectToAction(nameof(Import));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ProcessImportPictures(IFormFile pictureZip)
+        {
+            if (pictureZip == null) return RedirectToAction(nameof(Import));
+            using var stream = pictureZip.OpenReadStream();
+            var result = await _importService.ProcessImportPicturesAsync(stream);
+            if (result.Success) TempData["SuccessMessage"] = result.Message;
+            else TempData["ErrorMessage"] = result.Message;
+            return RedirectToAction(nameof(Import));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ProcessImportGroup(IFormFile groupFile)
+        {
+            if (groupFile == null) return RedirectToAction(nameof(Import));
+            using var stream = groupFile.OpenReadStream();
+            var result = await _importService.ProcessImportGroupAsync(stream);
+            if (result.Success) TempData["SuccessMessage"] = result.Message;
+            else TempData["ErrorMessage"] = result.Message;
+            return RedirectToAction(nameof(Import));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ProcessImportClass(IFormFile classFile)
+        {
+            if (classFile == null) return RedirectToAction(nameof(Import));
+            using var stream = classFile.OpenReadStream();
+            var result = await _importService.ProcessImportClassAsync(stream);
+            if (result.Success) TempData["SuccessMessage"] = result.Message;
+            else TempData["ErrorMessage"] = result.Message;
+            return RedirectToAction(nameof(Import));
+        }
 
         [HttpPost]
         public async Task<IActionResult> SaveAddress(BorrowerMaintenanceViewModel model)
