@@ -401,5 +401,112 @@ namespace LmsModernApp.Controllers
                 ? Redirect(model.ReturnUrl)
                 : RedirectToAction(nameof(Index));
         }
+        // ── File List (frmCatalogueFileList) ──────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> FileList(int catNo, string? libGroup)
+        {
+            var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
+            if (record == null)
+                return RedirectToAction(nameof(Index));
+
+            var stockItems = await _catalogueRepository.GetStockItemsAsync(catNo);
+
+            var model = new CatalogueFileListViewModel
+            {
+                CatNo = catNo,
+                Title = record.CatStr2,
+                Author = record.CatStr1,
+                LibGroup = record.CatLibGroup,
+                StockItems = stockItems.Select(s => new CatalogueStockItemRow
+                {
+                    StkItemNo = s.StkItemNo,
+                    StkLine1 = s.StkLine1,
+                    StkLine2 = s.StkLine2,
+                    StkLocPerm = s.StkLocPerm,
+                    StkLocTemp = s.StkLocTemp,
+                    StkForLoan = s.StkForLoan,
+                    StkIsOnLoan = s.StkIsOnLoan,
+                    StkEdition = s.StkEdition,
+                    StkVolume = s.StkVolume,
+                    StkCost = s.StkCost,
+                    StkDateRecd = s.StkDateRecd,
+                    StkLibGroup = s.StkLibGroup,
+                    StkOper = s.StkOper,
+                    StkDatetime = s.StkDatetime
+                }).ToList()
+            };
+
+            return View(model);
+        }
+
+        // ── Book Create (frmCatalogueBookCreate) ──────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> BookCreate(int catNo, string? libGroup, string? returnUrl)
+        {
+            var record = await _catalogueRepository.GetByRefNumberAsync(catNo, libGroup);
+            if (record == null)
+                return RedirectToAction(nameof(Index));
+
+            var model = new CatalogueBookCreateViewModel
+            {
+                CatNo = catNo,
+                Title = record.CatStr2,
+                Author = record.CatStr1,
+                LibGroup = record.CatLibGroup,
+                StkDateRecd = DateTime.Today
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BookCreate(CatalogueBookCreateViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var username = User.Identity?.Name ?? "UNKNOWN";
+            var now = DateTime.Now;
+
+            var item = new StockItemDto
+            {
+                StkCatRef = model.CatNo,
+                StkItemNo = model.StkItemNo,
+                StkLine1 = model.StkLine1,
+                StkLine2 = model.StkLine2,
+                StkLine3 = model.StkLine3,
+                StkLine4 = model.StkLine4,
+                StkEdition = model.StkEdition,
+                StkVolume = model.StkVolume,
+                StkCost = model.StkCost,
+                StkLocPerm = model.StkLocPerm,
+                StkLocTemp = model.StkLocTemp,
+                StkForLoan = model.StkForLoan,
+                StkStatsCode = model.StkStatsCode,
+                StkDescription = model.StkDescription,
+                StkLibGroup = model.LibGroup,
+                StkDateRecd = model.StkDateRecd ?? DateTime.Today,
+                StkOper = username,
+                StkDatetime = now
+            };
+
+            await _catalogueRepository.AddStockItemAsync(item);
+
+            TempData["SuccessMessage"] = $"Stock item '{model.StkItemNo}' added successfully.";
+
+            return RedirectToAction(nameof(FileList), new { catNo = model.CatNo, libGroup = model.LibGroup });
+        }
+
+        // ── Delete Stock Item ─────────────────────────────────────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteStockItem(string stkItemNo, int catNo, string? libGroup)
+        {
+            await _catalogueRepository.DeleteStockItemAsync(stkItemNo);
+            TempData["SuccessMessage"] = $"Stock item '{stkItemNo}' deleted.";
+            return RedirectToAction(nameof(FileList), new { catNo, libGroup });
+        }
     }
 }

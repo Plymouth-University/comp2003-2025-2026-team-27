@@ -1,0 +1,317 @@
+@model LmsModernApp.ViewModels.CatalogueBookCreateViewModel
+@{
+    ViewData["Title"] = "Add Stock Item";
+    Layout = "_Layout";
+}
+
+<partial name="_DashboardHeader" />
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    :root {
+        --primary: #1f66d1;
+        --primary-light: #2b78ff;
+        --accent: #d11b2d;
+        --surface: #f8f9fc;
+        --border: #dde3f0;
+        --text-main: #1e2a45;
+        --text-muted: #6b7a99;
+        --radius: 6px;
+        --shadow-md: 0 4px 16px rgba(26,79,186,.12);
+    }
+
+    .bc-wrap, .bc-wrap * {
+        font-family: 'DM Sans', sans-serif;
+        box-sizing: border-box;
+    }
+
+    .bc-wrap {
+        max-width: 680px;
+        margin: 32px auto;
+        padding: 0 16px;
+    }
+
+    .bc-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    .bc-card-header {
+        background: var(--primary);
+        padding: 14px 20px;
+    }
+
+        .bc-card-header h2 {
+            margin: 0 0 2px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .bc-card-header p {
+            margin: 0;
+            font-size: 12px;
+            color: rgba(255,255,255,0.75);
+        }
+
+    .bc-info-bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 20px;
+        display: flex;
+        gap: 24px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+        .bc-info-bar strong { color: var(--text-main); }
+
+    .bc-card-body { padding: 24px 24px 20px; }
+
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .form-section-title {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 6px;
+        margin-bottom: 4px;
+        margin-top: 8px;
+    }
+
+    .form-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+        .form-row label {
+            width: 140px;
+            min-width: 140px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        .form-row .required-star {
+            color: var(--accent);
+        }
+
+    .form-input {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--surface);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+        .form-input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(43,120,255,.12);
+        }
+
+        .form-input.wide { flex: 1; }
+        .form-input.short { width: 100px; }
+        .form-input.medium { width: 200px; }
+
+    .field-error {
+        font-size: 11px;
+        color: var(--accent);
+        margin-left: 152px;
+        margin-top: -8px;
+    }
+
+    .bc-card-footer {
+        padding: 14px 24px;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .btn-save {
+        padding: 7px 22px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--primary);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background .13s;
+    }
+
+        .btn-save:hover { background: var(--primary-light); }
+
+    .btn-cancel {
+        padding: 7px 18px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: background .13s;
+    }
+
+        .btn-cancel:hover { background: var(--surface); }
+</style>
+
+<div class="bc-wrap">
+    <div class="bc-card">
+        <div class="bc-card-header">
+            <h2>➕ Add New Stock Item / Copy</h2>
+            <p>Creating a new copy linked to catalogue ref <strong>@Model.CatNo</strong></p>
+        </div>
+
+        <!-- Catalogue Info -->
+        <div class="bc-info-bar">
+            <span><strong>Title:</strong> @(Model.Title ?? "—")</span>
+            <span><strong>Author:</strong> @(Model.Author ?? "—")</span>
+            <span><strong>Lib Group:</strong> @(Model.LibGroup ?? "—")</span>
+        </div>
+
+        <form asp-controller="Catalogue" asp-action="BookCreate" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="CatNo" value="@Model.CatNo" />
+            <input type="hidden" name="Title" value="@Model.Title" />
+            <input type="hidden" name="Author" value="@Model.Author" />
+            <input type="hidden" name="LibGroup" value="@Model.LibGroup" />
+
+            <div class="bc-card-body">
+                <div class="form-grid">
+
+                    <!-- Item Identity -->
+                    <div class="form-section-title">Item Identity</div>
+
+                    <div class="form-row">
+                        <label>Item No <span class="required-star">*</span></label>
+                        <input type="text" name="StkItemNo" value="@Model.StkItemNo"
+                               class="form-input medium" placeholder="e.g. B00001" required />
+                    </div>
+                    @if (!ViewData.ModelState.IsValid && ViewData.ModelState["StkItemNo"]?.Errors.Count > 0)
+                    {
+                        <div class="field-error">@ViewData.ModelState["StkItemNo"]!.Errors[0].ErrorMessage</div>
+                    }
+
+                    <div class="form-row">
+                        <label>Edition</label>
+                        <input type="text" name="StkEdition" value="@Model.StkEdition"
+                               class="form-input medium" placeholder="e.g. 3rd" />
+                    </div>
+
+                    <div class="form-row">
+                        <label>Volume</label>
+                        <input type="text" name="StkVolume" value="@Model.StkVolume"
+                               class="form-input medium" placeholder="e.g. Vol. 1" />
+                    </div>
+
+                    <!-- Location -->
+                    <div class="form-section-title">Location</div>
+
+                    <div class="form-row">
+                        <label>Branch / Notes</label>
+                        <input type="text" name="StkLine1" value="@Model.StkLine1"
+                               class="form-input wide" placeholder="Branch or location notes…" />
+                    </div>
+
+                    <div class="form-row">
+                        <label>Condition</label>
+                        <input type="text" name="StkLine2" value="@Model.StkLine2"
+                               class="form-input wide" placeholder="e.g. Good, Fair…" />
+                    </div>
+
+                    <div class="form-row">
+                        <label>Perm. Location</label>
+                        <input type="text" name="StkLocPerm" value="@Model.StkLocPerm"
+                               class="form-input medium" placeholder="Permanent shelf location" />
+                    </div>
+
+                    <div class="form-row">
+                        <label>Temp. Location</label>
+                        <input type="text" name="StkLocTemp" value="@Model.StkLocTemp"
+                               class="form-input medium" placeholder="Temporary location (optional)" />
+                    </div>
+
+                    <!-- Acquisition -->
+                    <div class="form-section-title">Acquisition</div>
+
+                    <div class="form-row">
+                        <label>Cost</label>
+                        <input type="number" name="StkCost" value="@Model.StkCost"
+                               class="form-input short" step="0.01" min="0" placeholder="0.00" />
+                    </div>
+
+                    <div class="form-row">
+                        <label>Date Received</label>
+                        <input type="date" name="StkDateRecd"
+                               value="@(Model.StkDateRecd.HasValue ? Model.StkDateRecd.Value.ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd"))"
+                               class="form-input medium" />
+                    </div>
+
+                    <div class="form-row">
+                        <label>Stats Code</label>
+                        <input type="text" name="StkStatsCode" value="@Model.StkStatsCode"
+                               class="form-input medium" placeholder="Stats code (optional)" />
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="form-section-title">Availability</div>
+
+                    <div class="form-row">
+                        <label>Available for Loan</label>
+                        <select name="StkForLoan" class="form-input short">
+                            @foreach (var opt in Model.ForLoanOptions)
+                            {
+                                if (Model.StkForLoan == opt)
+                                {
+                                    <option value="@opt" selected>@opt</option>
+                                }
+                                else
+                                {
+                                    <option value="@opt">@opt</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label>Description</label>
+                        <input type="text" name="StkDescription" value="@Model.StkDescription"
+                               class="form-input wide" placeholder="Additional description (optional)" />
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="bc-card-footer">
+                <a asp-controller="Catalogue" asp-action="FileList"
+                   asp-route-catNo="@Model.CatNo" asp-route-libGroup="@Model.LibGroup"
+                   class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-save">💾 Save Stock Item</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,333 @@
+@model LmsModernApp.ViewModels.CatalogueFileListViewModel
+@{
+    ViewData["Title"] = "Catalogue File List";
+    Layout = "_Layout";
+}
+
+<partial name="_DashboardHeader" />
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    :root {
+        --primary: #1f66d1;
+        --primary-light: #2b78ff;
+        --accent: #d11b2d;
+        --surface: #f8f9fc;
+        --border: #dde3f0;
+        --text-main: #1e2a45;
+        --text-muted: #6b7a99;
+        --radius: 6px;
+        --shadow-sm: 0 1px 3px rgba(26,79,186,.10);
+        --shadow-md: 0 4px 16px rgba(26,79,186,.12);
+    }
+
+    .fl-wrap, .fl-wrap * {
+        font-family: 'DM Sans', sans-serif;
+        box-sizing: border-box;
+    }
+
+    .fl-wrap {
+        max-width: 1000px;
+        margin: 32px auto;
+        padding: 0 16px;
+    }
+
+    .fl-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .fl-card-header {
+        background: var(--primary);
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .fl-card-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .fl-card-header span {
+            font-size: 12px;
+            color: rgba(255,255,255,0.75);
+        }
+
+    .fl-info-bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 20px;
+        display: flex;
+        gap: 24px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+        .fl-info-bar strong {
+            color: var(--text-main);
+        }
+
+    .fl-toolbar {
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 8px;
+    }
+
+    .fl-table-wrap {
+        overflow-x: auto;
+    }
+
+    .fl-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+        .fl-table thead th {
+            background: var(--surface);
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .fl-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .12s;
+        }
+
+            .fl-table tbody tr:hover {
+                background: #f0f5ff;
+            }
+
+        .fl-table td {
+            padding: 10px 14px;
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+    .badge-loan {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .badge-yes { background: #e6f9f0; color: #1a8a52; }
+    .badge-no  { background: #fce8e8; color: #b91c1c; }
+    .badge-on  { background: #fff3cd; color: #92620a; }
+
+    .btn-primary-sm {
+        padding: 6px 14px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--primary);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: background .13s;
+    }
+
+        .btn-primary-sm:hover { background: var(--primary-light); color: #fff; }
+
+    .btn-danger-sm {
+        padding: 5px 10px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--accent);
+        background: #fff;
+        border: 1px solid #f5c6c6;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background .13s;
+    }
+
+        .btn-danger-sm:hover { background: #fce8e8; }
+
+    .btn-cancel {
+        padding: 6px 14px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-main);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: background .13s;
+    }
+
+        .btn-cancel:hover { background: var(--surface); }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+
+        .empty-state i { font-size: 32px; margin-bottom: 8px; display: block; }
+
+    .fl-card-footer {
+        padding: 12px 20px;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+</style>
+
+<div class="fl-wrap">
+    <!-- Page Header Card -->
+    <div class="fl-card">
+        <div class="fl-card-header">
+            <h2>📋 Catalogue File List — Stock Items</h2>
+            <span>Ref No: @Model.CatNo</span>
+        </div>
+
+        <!-- Catalogue Info Bar -->
+        <div class="fl-info-bar">
+            <span><strong>Title:</strong> @(Model.Title ?? "—")</span>
+            <span><strong>Author:</strong> @(Model.Author ?? "—")</span>
+            <span><strong>Library Group:</strong> @(Model.LibGroup ?? "—")</span>
+            <span><strong>Total Copies:</strong> @Model.StockItems.Count</span>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="fl-toolbar">
+            <a asp-controller="Catalogue"
+               asp-action="BookCreate"
+               asp-route-catNo="@Model.CatNo"
+               asp-route-libGroup="@Model.LibGroup"
+               asp-route-returnUrl="@Url.Action("FileList", "Catalogue", new { catNo = Model.CatNo, libGroup = Model.LibGroup })"
+               class="btn-primary-sm">
+                ＋ Add New Copy
+            </a>
+            <a asp-controller="Catalogue"
+               asp-action="Details"
+               asp-route-catNo="@Model.CatNo"
+               asp-route-libGroup="@Model.LibGroup"
+               class="btn-cancel">
+                ← Back to Details
+            </a>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div style="margin:12px 20px; padding:10px 14px; background:#e6f9f0; border:1px solid #6edcaa; border-radius:4px; font-size:13px; color:#1a6645;">
+                ✅ @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div style="margin:12px 20px; padding:10px 14px; background:#fce8e8; border:1px solid #f5c6c6; border-radius:4px; font-size:13px; color:#b91c1c;">
+                ❌ @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- Stock Items Table -->
+        <div class="fl-table-wrap">
+            @if (!Model.StockItems.Any())
+            {
+                <div class="empty-state">
+                    <i>📦</i>
+                    No stock items found for this catalogue record.<br />
+                    <a asp-controller="Catalogue" asp-action="BookCreate"
+                       asp-route-catNo="@Model.CatNo" asp-route-libGroup="@Model.LibGroup"
+                       class="btn-primary-sm" style="margin-top:12px; display:inline-flex;">
+                        ＋ Add First Copy
+                    </a>
+                </div>
+            }
+            else
+            {
+                <table class="fl-table">
+                    <thead>
+                        <tr>
+                            <th>Item No</th>
+                            <th>Location</th>
+                            <th>Perm. Location</th>
+                            <th>Edition</th>
+                            <th>Volume</th>
+                            <th>Cost</th>
+                            <th>Date Received</th>
+                            <th>For Loan</th>
+                            <th>On Loan</th>
+                            <th>Operator</th>
+                            <th style="text-align:center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.StockItems)
+                        {
+                            <tr>
+                                <td><strong>@item.StkItemNo</strong></td>
+                                <td>@(item.StkLine1 ?? "—")</td>
+                                <td>@(item.StkLocPerm ?? "—")</td>
+                                <td>@(item.StkEdition ?? "—")</td>
+                                <td>@(item.StkVolume ?? "—")</td>
+                                <td>@(item.StkCost.HasValue ? item.StkCost.Value.ToString("C") : "—")</td>
+                                <td>@(item.StkDateRecd.HasValue ? item.StkDateRecd.Value.ToString("dd/MM/yyyy") : "—")</td>
+                                <td>
+                                    <span class="badge-loan @(item.StkForLoan == "Y" ? "badge-yes" : "badge-no")">
+                                        @(item.StkForLoan == "Y" ? "Yes" : "No")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-loan @(item.StkIsOnLoan == "Y" ? "badge-on" : "badge-yes")">
+                                        @(item.StkIsOnLoan == "Y" ? "On Loan" : "Available")
+                                    </span>
+                                </td>
+                                <td style="color:var(--text-muted); font-size:11px;">@(item.StkOper ?? "—")</td>
+                                <td style="text-align:center;">
+                                    <form asp-controller="Catalogue" asp-action="DeleteStockItem" method="post"
+                                          onsubmit="return confirm('Delete stock item @item.StkItemNo?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="stkItemNo" value="@item.StkItemNo" />
+                                        <input type="hidden" name="catNo" value="@Model.CatNo" />
+                                        <input type="hidden" name="libGroup" value="@Model.LibGroup" />
+                                        <button type="submit" class="btn-danger-sm">🗑 Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="fl-card-footer">
+            <span>@Model.StockItems.Count stock item(s) for catalogue ref <strong>@Model.CatNo</strong></span>
+            <a asp-controller="Catalogue" asp-action="Index" class="btn-cancel">← Back to Search</a>
+        </div>
+    </div>
+</div>

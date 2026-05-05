@@ -159,6 +159,10 @@
             <h2>Catalogue Record &mdash; Ref No @Model.CatNo</h2>
             <div class="det-header-actions">
                 <a href="@(string.IsNullOrEmpty(Model.ReturnUrl) ? Url.Action("Index", "Catalogue") : Model.ReturnUrl)" class="btn-hdr btn-hdr-back">&#8592; Back</a>
+                <a asp-controller="Catalogue" asp-action="FileList"
+                   asp-route-catNo="@Model.CatNo"
+                   asp-route-libGroup="@Model.LibGroup"
+                   class="btn-hdr btn-hdr-edit">📋 File List</a>
                 <a asp-controller="Catalogue" asp-action="Modify"
                    asp-route-catNo="@Model.CatNo"
                    asp-route-libGroup="@Model.LibGroup"
